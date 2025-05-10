@@ -1,51 +1,58 @@
 use axum::{
+    extract::{State, TypedHeader},
+    headers::{authorization::Bearer, Authorization},
     http::{Request, StatusCode},
     middleware::Next,
     response::Response,
-    extract::TypedHeader,
-    headers::{authorization::Bearer, Authorization},
 };
 use std::sync::Arc;
 
-// This is a placeholder for JWT verification logic
-pub async fn verify_token(token: &str) -> bool {
-    // In a real implementation, this would verify the JWT token
-    // against the secret key and check for expiration
-    token.starts_with("valid_") // Simple placeholder
-}
+use crate::api::auth::AppState;
+use crate::utils::security::verify_token;
+use crate::errors::ApiError;
 
 // Authentication middleware implementation
 pub async fn auth_layer<B>(
+    State(state): State<AppState>,
     TypedHeader(auth): TypedHeader<Authorization<Bearer>>,
     request: Request<B>,
     next: Next<B>,
-) -> Result<Response, StatusCode> {
+) -> Result<Response, ApiError> {
     // Extract the token from the Authorization header
     let token = auth.token();
     
-    // Verify the token
-    if verify_token(token).await {
-        // If token is valid, continue to the handler
-        Ok(next.run(request).await)
-    } else {
-        // If token is invalid, return 401 Unauthorized
-        Err(StatusCode::UNAUTHORIZED)
+    // Skip authentication if disabled in config
+    if !state.config.auth.enable_auth {
+        return Ok(next.run(request).await);
+    }
+    
+    // Verify the token against our JWT secret
+    match verify_token(token, &state.config.auth.jwt_secret) {
+        Ok(_claims) => {
+            // If token is valid, continue to the handler
+            Ok(next.run(request).await)
+        }
+        Err(err) => {
+            // If token verification failed, return the error
+            Err(err)
+        }
     }
 }
 
 // Function to create the auth middleware
 pub fn auth_middleware() -> axum::middleware::from_fn_with_state<
-    Arc<()>,
+    AppState,
     fn(
+        State<AppState>,
         TypedHeader<Authorization<Bearer>>,
         Request<axum::body::Body>,
         Next<axum::body::Body>,
-    ) -> futures::future::BoxFuture<'static, Result<Response, StatusCode>>,
-    Arc<()>,
+    ) -> futures::future::BoxFuture<'static, Result<Response, ApiError>>,
+    AppState,
 > {
-    axum::middleware::from_fn_with_state(Arc::new(()), |state, auth, req, next| {
+    axum::middleware::from_fn_with_state(|state, auth, req, next| {
         Box::pin(async move {
-            auth_layer(auth, req, next).await
+            auth_layer(state, auth, req, next).await
         })
     })
 }

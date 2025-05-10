@@ -1,18 +1,29 @@
 use axum::{
     routing::{get, post, put, delete},
-    extract::{Path, Query, Multipart},
+    extract::{Path, Query, Multipart, State},
     Router,
-    http::StatusCode,
-    response::IntoResponse,
+    http::{StatusCode, header},
+    response::{IntoResponse, Response},
     Json,
     body::StreamBody,
 };
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
-use crate::middleware::auth::auth_middleware;
+use std::path::{Path as FilePath, PathBuf};
+use std::sync::Arc;
 use tokio::fs;
+use tokio::io::AsyncWriteExt;
 use tokio_util::io::ReaderStream;
+use bytes::Bytes;
+use futures::{Stream, StreamExt, TryStreamExt};
 
+use crate::middleware::auth::auth_middleware;
+use crate::errors::ApiError;
+use crate::services::file_service::{FileService, FileMetadata};
+use crate::utils::security::sanitize_path;
+use crate::config::Config;
+use crate::api::auth::AppState;
+
+// Keep the same FileInfo struct from before for API compatibility
 #[derive(Serialize)]
 pub struct FileInfo {
     name: String,
@@ -38,7 +49,7 @@ pub struct MoveRequest {
     destination: String,
 }
 
-pub fn router() -> Router {
+pub fn router() -> Router<AppState> {
     Router::new()
         // Protected routes requiring authentication
         .route("/list", get(list_files))
@@ -50,95 +61,232 @@ pub fn router() -> Router {
         .layer(auth_middleware())
 }
 
+// Convert FileMetadata to FileInfo for API response
+fn convert_to_file_info(metadata: FileMetadata) -> FileInfo {
+    FileInfo {
+        name: metadata.name,
+        path: metadata.path,
+        size: metadata.size,
+        is_dir: metadata.is_dir,
+        modified: metadata.modified.to_rfc3339(),
+        permissions: metadata.permissions,
+    }
+}
+
 // Handler to list files and directories
-async fn list_files(Query(params): Query<ListQuery>) -> Result<Json<Vec<FileInfo>>, StatusCode> {
+async fn list_files(
+    State(state): State<AppState>,
+    Query(params): Query<ListQuery>,
+) -> Result<Json<Vec<FileInfo>>, ApiError> {
     let path = params.path.unwrap_or_else(|| ".".to_string());
+    let sanitized_path = sanitize_path(&path);
     
-    // In a real implementation, this would:
-    // 1. Validate and sanitize the path
-    // 2. List files with detailed metadata
-    // 3. Handle errors properly
+    let file_service = FileService::new(
+        state.config.storage.home_directory.clone()
+    );
     
-    // For now, return a placeholder response
-    Ok(Json(vec![
-        FileInfo {
-            name: "example.txt".to_string(),
-            path: format!("{}/example.txt", path),
-            size: 1024,
-            is_dir: false,
-            modified: "2025-05-10T12:00:00Z".to_string(),
-            permissions: "rw-r--r--".to_string(),
-        },
-        FileInfo {
-            name: "documents".to_string(),
-            path: format!("{}/documents", path),
-            size: 0,
-            is_dir: true,
-            modified: "2025-05-09T15:30:00Z".to_string(),
-            permissions: "rwxr-xr-x".to_string(),
-        }
-    ]))
+    // Get file metadata from service
+    let metadata_list = file_service.list_directory(FilePath::new(&sanitized_path)).await?;
+    
+    // Convert to response format
+    let file_info_list = metadata_list
+        .into_iter()
+        .map(convert_to_file_info)
+        .collect();
+    
+    Ok(Json(file_info_list))
 }
 
 // Handler to download a file
-async fn download_file(Path(path): Path<String>) -> Result<impl IntoResponse, StatusCode> {
-    // In a real implementation, this would:
-    // 1. Validate and sanitize the path
-    // 2. Check file existence and permissions
-    // 3. Stream the file contents
-    // 4. Support resumable downloads
+async fn download_file(
+    State(state): State<AppState>,
+    Path(path): Path<String>,
+) -> Result<impl IntoResponse, ApiError> {
+    let sanitized_path = sanitize_path(&path);
+    let file_service = FileService::new(
+        state.config.storage.home_directory.clone()
+    );
     
-    // For now, return a placeholder response
-    Err(StatusCode::NOT_IMPLEMENTED)
+    // Get file contents from service
+    let file_data = file_service.read_file(FilePath::new(&sanitized_path)).await?;
+    
+    // Get file name for the Content-Disposition header
+    let file_name = PathBuf::from(&sanitized_path)
+        .file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or("download");
+    
+    // Build response with headers
+    let headers = [
+        (header::CONTENT_TYPE, "application/octet-stream"),
+        (header::CONTENT_DISPOSITION, &format!("attachment; filename=\"{}\"", file_name)),
+    ];
+    
+    let body = axum::body::Full::from(file_data);
+    
+    Ok((headers, body))
+}
+
+// Save upload file chunk
+async fn save_file_chunk(
+    file_path: PathBuf,
+    data: Bytes,
+    is_first_chunk: bool,
+) -> Result<(), ApiError> {
+    // Create the parent directories if they don't exist
+    if let Some(parent) = file_path.parent() {
+        fs::create_dir_all(parent).await.map_err(|e| {
+            ApiError::Internal(format!("Failed to create directory: {}", e))
+        })?;
+    }
+    
+    // Open the file in append mode (or create+truncate if it's the first chunk)
+    let file_mode = if is_first_chunk {
+        fs::OpenOptions::new().write(true).create(true).truncate(true)
+    } else {
+        fs::OpenOptions::new().write(true).create(true).append(true)
+    };
+    
+    let mut file = file_mode.open(&file_path).await.map_err(|e| {
+        ApiError::Internal(format!("Failed to open file: {}", e))
+    })?;
+    
+    // Write the chunk
+    file.write_all(&data).await.map_err(|e| {
+        ApiError::Internal(format!("Failed to write file: {}", e))
+    })?;
+    
+    Ok(())
 }
 
 // Handler to upload a file
-async fn upload_file(multipart: Multipart) -> Result<StatusCode, StatusCode> {
-    // In a real implementation, this would:
-    // 1. Process multipart form data
-    // 2. Validate and sanitize the destination path
-    // 3. Stream the file contents to disk
-    // 4. Support resumable uploads
+async fn upload_file(
+    State(state): State<AppState>,
+    mut multipart: Multipart,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    let file_service = FileService::new(
+        state.config.storage.home_directory.clone()
+    );
     
-    // For now, return a placeholder response
-    Err(StatusCode::NOT_IMPLEMENTED)
+    // Track if this is the first chunk of the file
+    let mut is_first_chunk = true;
+    let mut target_path = None;
+    let mut total_bytes = 0u64;
+    
+    // Process each field in the multipart form
+    while let Some(field) = multipart.next_field().await.map_err(|e| {
+        ApiError::InvalidInput(format!("Failed to process multipart form: {}", e))
+    })? {
+        let name = field.name().unwrap_or("").to_string();
+        
+        if name == "path" {
+            // Get the target path from the form
+            let path_str = field.text().await.map_err(|e| {
+                ApiError::InvalidInput(format!("Failed to read path field: {}", e))
+            })?;
+            
+            let sanitized_path = sanitize_path(&path_str);
+            target_path = Some(sanitized_path);
+        } else if name == "file" {
+            // Get the target path if it exists
+            let path = target_path.clone().unwrap_or_else(|| {
+                // If no path was provided, use the file name
+                let file_name = field.file_name().unwrap_or("upload.bin").to_string();
+                sanitize_path(&file_name)
+            });
+            
+            // Create the full path
+            let full_path = state.config.storage.home_directory.join(&path);
+            
+            // Stream and save the file data
+            let mut byte_counter = 0u64;
+            let mut data_stream = field.map_err(|e| {
+                ApiError::Internal(format!("Failed to read upload data: {}", e))
+            });
+            
+            // Process each chunk of data
+            while let Some(chunk) = data_stream.next().await {
+                let data = chunk?;
+                let chunk_size = data.len() as u64;
+                
+                // Check if upload size exceeds the maximum
+                byte_counter += chunk_size;
+                if byte_counter > state.config.storage.max_upload_size as u64 {
+                    return Err(ApiError::InvalidInput(
+                        format!("Upload size exceeds the maximum of {} bytes", 
+                                state.config.storage.max_upload_size)
+                    ));
+                }
+                
+                // Save the chunk
+                save_file_chunk(full_path.clone(), data, is_first_chunk).await?;
+                is_first_chunk = false;
+            }
+            
+            total_bytes += byte_counter;
+        }
+    }
+    
+    // Return success with file info
+    Ok(Json(serde_json::json!({
+        "success": true,
+        "bytes_written": total_bytes,
+        "path": target_path.unwrap_or_else(|| "unknown".to_string())
+    })))
 }
 
 // Handler to rename a file or directory
 async fn rename_file(
+    State(state): State<AppState>,
     Path(path): Path<String>,
-    Json(request): Json<RenameRequest>
-) -> StatusCode {
-    // In a real implementation, this would:
-    // 1. Validate and sanitize paths
-    // 2. Check permissions
-    // 3. Perform the rename operation
+    Json(request): Json<RenameRequest>,
+) -> Result<StatusCode, ApiError> {
+    let sanitized_path = sanitize_path(&path);
+    let file_service = FileService::new(
+        state.config.storage.home_directory.clone()
+    );
     
-    // For now, return a placeholder response
-    StatusCode::NOT_IMPLEMENTED
+    file_service.rename(
+        FilePath::new(&sanitized_path), 
+        &request.new_name
+    ).await?;
+    
+    Ok(StatusCode::OK)
 }
 
 // Handler to move a file or directory
 async fn move_file(
+    State(state): State<AppState>,
     Path(path): Path<String>,
-    Json(request): Json<MoveRequest>
-) -> StatusCode {
-    // In a real implementation, this would:
-    // 1. Validate and sanitize paths
-    // 2. Check permissions
-    // 3. Perform the move operation
+    Json(request): Json<MoveRequest>,
+) -> Result<StatusCode, ApiError> {
+    let source_path = sanitize_path(&path);
+    let destination_path = sanitize_path(&request.destination);
     
-    // For now, return a placeholder response
-    StatusCode::NOT_IMPLEMENTED
+    let file_service = FileService::new(
+        state.config.storage.home_directory.clone()
+    );
+    
+    file_service.move_item(
+        FilePath::new(&source_path),
+        FilePath::new(&destination_path)
+    ).await?;
+    
+    Ok(StatusCode::OK)
 }
 
 // Handler to delete a file or directory
-async fn delete_file(Path(path): Path<String>) -> StatusCode {
-    // In a real implementation, this would:
-    // 1. Validate and sanitize the path
-    // 2. Check permissions
-    // 3. Perform the delete operation
+async fn delete_file(
+    State(state): State<AppState>,
+    Path(path): Path<String>,
+) -> Result<StatusCode, ApiError> {
+    let sanitized_path = sanitize_path(&path);
     
-    // For now, return a placeholder response
-    StatusCode::NOT_IMPLEMENTED
+    let file_service = FileService::new(
+        state.config.storage.home_directory.clone()
+    );
+    
+    file_service.delete(FilePath::new(&sanitized_path)).await?;
+    
+    Ok(StatusCode::OK)
 }

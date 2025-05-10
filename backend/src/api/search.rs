@@ -1,11 +1,16 @@
 use axum::{
-    extract::Query,
+    extract::{Query, State},
     routing::get,
     Router,
     Json,
 };
 use serde::{Deserialize, Serialize};
+use std::path::Path;
 use crate::middleware::auth::auth_middleware;
+use crate::services::search_service::{SearchService, SearchResult as ServiceSearchResult};
+use crate::utils::security::sanitize_path;
+use crate::api::auth::AppState;
+use crate::errors::ApiError;
 
 #[derive(Deserialize)]
 pub struct SearchQuery {
@@ -21,7 +26,7 @@ pub struct SearchResult {
     score: f32,
 }
 
-pub fn router() -> Router {
+pub fn router() -> Router<AppState> {
     Router::new()
         .route("/search", get(search_files))
         .layer(auth_middleware())
@@ -29,28 +34,30 @@ pub fn router() -> Router {
 
 // Handler for fuzzy file search
 async fn search_files(
+    State(state): State<AppState>,
     Query(params): Query<SearchQuery>
-) -> Json<Vec<SearchResult>> {
-    // In a real implementation, this would:
-    // 1. Validate and sanitize the path
-    // 2. Perform fuzzy search on filenames
-    // 3. Rank results by relevance
+) -> Result<Json<Vec<SearchResult>>, ApiError> {
+    let search_service = SearchService::new(
+        state.config.storage.home_directory.clone()
+    );
     
-    // For now, return a placeholder response
-    let results = vec![
-        SearchResult {
-            path: format!("{}/documents/example.txt", params.path.as_deref().unwrap_or(".")),
-            name: "example.txt".to_string(),
-            is_dir: false,
-            score: 0.95,
-        },
-        SearchResult {
-            path: format!("{}/documents/examples/sample.txt", params.path.as_deref().unwrap_or(".")),
-            name: "sample.txt".to_string(),
-            is_dir: false,
-            score: 0.8,
-        },
-    ];
+    // Sanitize and prepare the search path
+    let search_path = params.path.as_deref()
+        .map(sanitize_path)
+        .map(|p| Path::new(&p));
     
-    Json(results)
+    // Perform the search
+    let service_results = search_service.search(&params.query, search_path).await?;
+    
+    // Convert to API response format
+    let results: Vec<SearchResult> = service_results.into_iter()
+        .map(|res| SearchResult {
+            path: res.path,
+            name: res.name,
+            is_dir: res.is_dir,
+            score: res.score,
+        })
+        .collect();
+    
+    Ok(Json(results))
 }

@@ -3,14 +3,20 @@ use axum::{
     Router,
     http::StatusCode,
     Json,
-    extract::State,
+    extract::{State, TypedHeader},
+    headers::{authorization::Bearer, Authorization},
 };
 use serde::{Deserialize, Serialize};
 use crate::middleware::auth::auth_middleware;
+use crate::errors::ApiError;
+use crate::utils::security::{generate_token, verify_token};
+use crate::config::Config;
+use std::sync::Arc;
 
 #[derive(Serialize)]
 pub struct TokenResponse {
     token: String,
+    expires_in: u64,
 }
 
 #[derive(Deserialize)]
@@ -19,7 +25,13 @@ pub struct LoginRequest {
     password: String,
 }
 
-pub fn router() -> Router {
+// App state containing shared configuration
+#[derive(Clone)]
+pub struct AppState {
+    pub config: Arc<Config>,
+}
+
+pub fn router() -> Router<AppState> {
     Router::new()
         .route("/login", post(login_handler))
         .route("/logout", post(logout_handler))
@@ -27,26 +39,50 @@ pub fn router() -> Router {
 }
 
 // Handler for user login
-async fn login_handler(Json(payload): Json<LoginRequest>) -> Result<Json<TokenResponse>, StatusCode> {
+async fn login_handler(
+    State(state): State<AppState>,
+    Json(payload): Json<LoginRequest>,
+) -> Result<Json<TokenResponse>, ApiError> {
     // In a real app, this would validate credentials against a database
     // For now, we'll use a simple check for demo purposes
     if payload.username == "admin" && payload.password == "password" {
         // Generate a JWT token
-        let token = "sample_jwt_token".to_string(); // This would be a real JWT in production
-        Ok(Json(TokenResponse { token }))
+        let token = generate_token(
+            &payload.username,
+            &state.config.auth.jwt_secret,
+            state.config.auth.token_expiration / 3600, // Convert seconds to hours
+        )?;
+        
+        Ok(Json(TokenResponse {
+            token,
+            expires_in: state.config.auth.token_expiration,
+        }))
     } else {
-        Err(StatusCode::UNAUTHORIZED)
+        Err(ApiError::Authentication("Invalid username or password".to_string()))
     }
 }
 
 // Handler for user logout 
-async fn logout_handler() -> StatusCode {
-    // In a real app, you might invalidate the token
-    StatusCode::OK
+async fn logout_handler() -> Result<StatusCode, ApiError> {
+    // In a real app, you might add the token to a blacklist or invalidate it
+    // Since JWTs are stateless, client-side logout is typically sufficient
+    Ok(StatusCode::OK)
 }
 
 // Handler to validate JWT token
-async fn validate_token_handler() -> StatusCode {
-    // This would validate the JWT token in a real app
-    StatusCode::OK
+async fn validate_token_handler(
+    State(state): State<AppState>,
+    TypedHeader(auth): TypedHeader<Authorization<Bearer>>,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    let token = auth.token();
+    
+    // Verify the token is valid
+    let claims = verify_token(token, &state.config.auth.jwt_secret)?;
+    
+    // Return user info from token
+    Ok(Json(serde_json::json!({
+        "username": claims.sub,
+        "valid": true,
+        "expires_at": claims.exp
+    })))
 }
