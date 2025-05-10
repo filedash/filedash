@@ -6,8 +6,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use std::path::Path;
-use crate::middleware::auth::auth_middleware;
-use crate::services::search_service::{SearchService, SearchResult as ServiceSearchResult};
+use crate::services::search_service::SearchService;
 use crate::utils::security::sanitize_path;
 use crate::api::auth::AppState;
 use crate::errors::ApiError;
@@ -29,7 +28,8 @@ pub struct SearchResult {
 pub fn router() -> Router<AppState> {
     Router::new()
         .route("/search", get(search_files))
-        .layer(auth_middleware())
+        // Apply authentication middleware correctly
+        .route_layer(axum::middleware::from_fn(crate::middleware::auth::auth_middleware))
 }
 
 // Handler for fuzzy file search
@@ -42,9 +42,11 @@ async fn search_files(
     );
     
     // Sanitize and prepare the search path
-    let search_path = params.path.as_deref()
-        .map(sanitize_path)
-        .map(|p| Path::new(&p));
+    let search_path_str = params.path.as_deref()
+        .map(sanitize_path);
+    
+    // Convert string to Path when needed inside the search function
+    let search_path = search_path_str.as_deref().map(Path::new);
     
     // Perform the search
     let service_results = search_service.search(&params.query, search_path).await?;

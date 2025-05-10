@@ -90,7 +90,7 @@ impl FileService {
             // Format permissions in Unix-like format (simplified)
             let mode = metadata.permissions().mode();
             let permissions = format!(
-                "{}{}{}{}{}{}{}{}{}",
+                "{}{}{}{}{}{}{}{}{}{}",
                 if is_dir { "d" } else { "-" },
                 if mode & 0o400 != 0 { "r" } else { "-" },
                 if mode & 0o200 != 0 { "w" } else { "-" },
@@ -100,7 +100,7 @@ impl FileService {
                 if mode & 0o010 != 0 { "x" } else { "-" },
                 if mode & 0o004 != 0 { "r" } else { "-" },
                 if mode & 0o002 != 0 { "w" } else { "-" },
-                if mode & 0o001 != 0 { "x" } else { "-" },
+                if mode & 0o001 != 0 { "x" } else { "-" }
             );
             
             // Convert system time to DateTime<Utc>

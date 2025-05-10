@@ -7,11 +7,11 @@ description = "A high-performance, minimal file browser"
 
 [dependencies]
 # Web framework
-axum = { version = "0.7", features = ["multipart"] }
+axum = { version = "0.6", features = ["multipart", "headers", "macros"] }
 tower = "0.4"
-tower-http = { version = "0.5", features = ["fs", "trace", "cors"] }
+tower-http = { version = "0.4", features = ["fs", "trace", "cors"] }
 tokio = { version = "1", features = ["full"] }
-hyper = "1.1"
+hyper = "0.14"
 
 # Serialization & Deserialization
 serde = { version = "1.0", features = ["derive"] }
@@ -41,3 +41,4 @@ futures = "0.3"
 bytes = "1.5"
 walkdir = "2.4"
 path-clean = "1.0"
+tokio-util = { version = "0.7", features = ["io"] }

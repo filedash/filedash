@@ -33,3 +33,6 @@ yarn-error.log
 # OS specific
 .DS_Store
 Thumbs.db
+
+# Exclude backend target directory
+/backend/target/

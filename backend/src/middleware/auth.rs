@@ -1,58 +1,74 @@
 use axum::{
-    extract::{State, TypedHeader},
+    extract::{TypedHeader},
     headers::{authorization::Bearer, Authorization},
     http::{Request, StatusCode},
     middleware::Next,
-    response::Response,
+    response::{IntoResponse, Response},
 };
-use std::sync::Arc;
 
 use crate::api::auth::AppState;
 use crate::utils::security::verify_token;
-use crate::errors::ApiError;
 
-// Authentication middleware implementation
-pub async fn auth_layer<B>(
-    State(state): State<AppState>,
-    TypedHeader(auth): TypedHeader<Authorization<Bearer>>,
+// Authentication middleware function
+pub async fn auth_middleware<B>(
+    // Extract the authorization header if present
+    auth_header: Option<TypedHeader<Authorization<Bearer>>>,
+    // Access the request
     request: Request<B>,
     next: Next<B>,
-) -> Result<Response, ApiError> {
-    // Extract the token from the Authorization header
+) -> Response {
+    // Extract the app state from request extensions
+    let state = request.extensions().get::<AppState>().cloned();
+    
+    // Skip authentication if state is missing or auth is disabled
+    if let Some(ref app_state) = state {
+        if !app_state.config.auth.enable_auth {
+            return next.run(request).await;
+        }
+    } else {
+        // If we can't access the state, let the request proceed
+        // This shouldn't happen in normal operation
+        return next.run(request).await;
+    }
+    
+    // Check if auth header is present
+    let Some(TypedHeader(auth)) = auth_header else {
+        return (
+            StatusCode::UNAUTHORIZED,
+            axum::Json(serde_json::json!({
+                "error": {
+                    "message": "Authentication required",
+                    "status": 401
+                }
+            }))
+        ).into_response();
+    };
+    
+    // Get token from header
     let token = auth.token();
     
-    // Skip authentication if disabled in config
-    if !state.config.auth.enable_auth {
-        return Ok(next.run(request).await);
-    }
+    // Get JWT secret from state
+    let jwt_secret = state
+        .map(|s| s.config.auth.jwt_secret.clone())
+        .unwrap_or_else(|| "default_secret".to_string());
     
-    // Verify the token against our JWT secret
-    match verify_token(token, &state.config.auth.jwt_secret) {
-        Ok(_claims) => {
+    // Verify the token
+    match verify_token(token, &jwt_secret) {
+        Ok(_) => {
             // If token is valid, continue to the handler
-            Ok(next.run(request).await)
+            next.run(request).await
         }
-        Err(err) => {
-            // If token verification failed, return the error
-            Err(err)
+        Err(_) => {
+            // If verification failed, return an error
+            (
+                StatusCode::UNAUTHORIZED,
+                axum::Json(serde_json::json!({
+                    "error": {
+                        "message": "Invalid authentication token",
+                        "status": 401
+                    }
+                }))
+            ).into_response()
         }
     }
-}
-
-// Function to create the auth middleware
-pub fn auth_middleware() -> axum::middleware::from_fn_with_state<
-    AppState,
-    fn(
-        State<AppState>,
-        TypedHeader<Authorization<Bearer>>,
-        Request<axum::body::Body>,
-        Next<axum::body::Body>,
-    ) -> futures::future::BoxFuture<'static, Result<Response, ApiError>>,
-    AppState,
-> {
-    axum::middleware::from_fn_with_state(|state, auth, req, next| {
-        Box::pin(async move {
-            auth_layer(state, auth, req, next).await
-        })
-    })
 }

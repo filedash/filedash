@@ -10,7 +10,6 @@ use axum::{
     Router,
     http::StatusCode,
     response::{Html, IntoResponse},
-    extract::State,
 };
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -62,8 +61,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
-        .await
-        .unwrap();
+        .await?;
 
     Ok(())
 }

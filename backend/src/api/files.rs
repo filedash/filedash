@@ -2,25 +2,21 @@ use axum::{
     routing::{get, post, put, delete},
     extract::{Path, Query, Multipart, State},
     Router,
-    http::{StatusCode, header},
-    response::{IntoResponse, Response},
+    http::{StatusCode, header, Response},
+    response::IntoResponse,
     Json,
-    body::StreamBody,
+    body::Full,
 };
 use serde::{Deserialize, Serialize};
 use std::path::{Path as FilePath, PathBuf};
-use std::sync::Arc;
 use tokio::fs;
 use tokio::io::AsyncWriteExt;
-use tokio_util::io::ReaderStream;
 use bytes::Bytes;
-use futures::{Stream, StreamExt, TryStreamExt};
+use futures::{StreamExt, TryStreamExt};
 
-use crate::middleware::auth::auth_middleware;
 use crate::errors::ApiError;
 use crate::services::file_service::{FileService, FileMetadata};
 use crate::utils::security::sanitize_path;
-use crate::config::Config;
 use crate::api::auth::AppState;
 
 // Keep the same FileInfo struct from before for API compatibility
@@ -58,7 +54,8 @@ pub fn router() -> Router<AppState> {
         .route("/rename/*path", put(rename_file))
         .route("/move/*path", put(move_file))
         .route("/delete/*path", delete(delete_file))
-        .layer(auth_middleware())
+        // Apply authentication middleware correctly
+        .route_layer(axum::middleware::from_fn(crate::middleware::auth::auth_middleware))
 }
 
 // Convert FileMetadata to FileInfo for API response
@@ -111,20 +108,27 @@ async fn download_file(
     let file_data = file_service.read_file(FilePath::new(&sanitized_path)).await?;
     
     // Get file name for the Content-Disposition header
-    let file_name = PathBuf::from(&sanitized_path)
+    let path_buf = PathBuf::from(&sanitized_path);
+    let file_name = path_buf
         .file_name()
         .and_then(|name| name.to_str())
-        .unwrap_or("download");
+        .unwrap_or("download")
+        .to_string();
+    
+    let disposition = format!("attachment; filename=\"{}\"", file_name);
+    
+    // Convert to owned header values
+    let content_type = header::HeaderValue::from_static("application/octet-stream");
+    let content_disposition = header::HeaderValue::from_str(&disposition)
+        .map_err(|_| ApiError::Internal("Failed to create header value".to_string()))?;
     
     // Build response with headers
-    let headers = [
-        (header::CONTENT_TYPE, "application/octet-stream"),
-        (header::CONTENT_DISPOSITION, &format!("attachment; filename=\"{}\"", file_name)),
-    ];
+    let mut response = Response::new(Full::from(file_data));
+    let headers = response.headers_mut();
+    headers.insert(header::CONTENT_TYPE, content_type);
+    headers.insert(header::CONTENT_DISPOSITION, content_disposition);
     
-    let body = axum::body::Full::from(file_data);
-    
-    Ok((headers, body))
+    Ok(response)
 }
 
 // Save upload file chunk
@@ -140,14 +144,18 @@ async fn save_file_chunk(
         })?;
     }
     
-    // Open the file in append mode (or create+truncate if it's the first chunk)
-    let file_mode = if is_first_chunk {
-        fs::OpenOptions::new().write(true).create(true).truncate(true)
-    } else {
-        fs::OpenOptions::new().write(true).create(true).append(true)
-    };
+    // Create file options with appropriate mode
+    let mut options = fs::OpenOptions::new();
+    options.write(true).create(true);
     
-    let mut file = file_mode.open(&file_path).await.map_err(|e| {
+    if is_first_chunk {
+        options.truncate(true);
+    } else {
+        options.append(true);
+    }
+    
+    // Open the file with the constructed options
+    let mut file = options.open(&file_path).await.map_err(|e| {
         ApiError::Internal(format!("Failed to open file: {}", e))
     })?;
     
