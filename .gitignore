@@ -36,3 +36,6 @@ Thumbs.db
 
 # Exclude backend target directory
 /backend/target/
+
+# Depolyment files
+/backend/frontend_dist
