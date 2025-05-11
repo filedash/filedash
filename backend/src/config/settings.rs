@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
+use std::path::{PathBuf, Path};
 use std::fs;
 use anyhow::Result;
 
@@ -51,16 +51,19 @@ impl Default for Config {
     }
 }
 
-pub fn load_config() -> Result<Config> {
-    let config_path = PathBuf::from("config.toml");
-    if !config_path.exists() {
+pub fn load_config_from_path(path: &Path) -> Result<Config> {
+    if !path.exists() {
         let default_config = Config::default();
         let toml = toml::to_string_pretty(&default_config)?;
-        fs::write(&config_path, toml)?;
+        fs::write(path, toml)?;
         return Ok(default_config);
     }
 
-    let config_content = fs::read_to_string(&config_path)?;
+    let config_content = fs::read_to_string(path)?;
     let config: Config = toml::from_str(&config_content)?;
     Ok(config)
+}
+
+pub fn load_config() -> Result<Config> {
+    load_config_from_path(Path::new("config.toml"))
 }

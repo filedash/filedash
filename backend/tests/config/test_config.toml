@@ -1,0 +1,13 @@
+[server]
+port = 8123  # Different port for tests
+host = "127.0.0.1"
+
+[storage]
+home_directory = "./test_files"  # Separate test directory
+allowed_extensions = ["*"]  # Allow all file types
+max_upload_size = 10485760  # 10MB in bytes
+
+[auth]
+jwt_secret = "test_secret_key_for_testing_purposes_only"
+token_expiration = 3600  # 1 hour in seconds
+enable_auth = true

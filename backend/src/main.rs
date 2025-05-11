@@ -1,23 +1,10 @@
-mod api;
-mod config;
-mod errors;
-mod middleware;
-mod services;
-mod utils;
-
-use axum::{
-    routing::{get, post},
-    Router,
-    http::StatusCode,
-    response::{Html, IntoResponse},
-};
 use std::net::SocketAddr;
 use std::sync::Arc;
-use tower_http::cors::CorsLayer;
-use tower_http::services::ServeDir;
-use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use crate::api::auth::AppState;
+
+use filedash::api::auth::AppState;
+use filedash::config;
+use filedash::build_app;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -44,16 +31,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         tracing::info!("Created storage directory: {:?}", files_dir);
     }
     
-    // Build our application with routes
-    let app = Router::new()
-        .nest("/api", api_router())
-        // Serve static files (frontend)
-        .nest_service("/", ServeDir::new("./frontend_dist"))
-        // Fallback for SPA routing
-        .fallback(get(serve_index))
-        .layer(TraceLayer::new_for_http())
-        .layer(CorsLayer::permissive())
-        .with_state(state);
+    // Build application with routes
+    let app = build_app(state);
 
     // Run the server
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
@@ -64,24 +43,4 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
 
     Ok(())
-}
-
-// API router combining all routes
-fn api_router() -> Router<AppState> {
-    Router::new()
-        .merge(api::auth::router())
-        .merge(api::files::router())
-        .merge(api::search::router())
-}
-
-// Serve the index.html for SPA fallback
-async fn serve_index() -> impl IntoResponse {
-    // Try to serve the index.html file from the static directory
-    match tokio::fs::read_to_string("./frontend_dist/index.html").await {
-        Ok(content) => Html(content).into_response(),
-        Err(_) => (
-            StatusCode::NOT_FOUND,
-            Html("<html><body><h1>404 - FileDash frontend not found</h1><p>Please build the frontend and place it in the frontend_dist directory.</p></body></html>")
-        ).into_response(),
-    }
 }
