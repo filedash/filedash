@@ -5,6 +5,8 @@ import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { ErrorDisplay } from '../components/common/ErrorDisplay';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
+import { Separator } from '../components/ui/separator';
 import { Upload, RefreshCw, FolderPlus } from 'lucide-react';
 
 export function FileBrowserPage() {
@@ -33,10 +35,22 @@ export function FileBrowserPage() {
   }
 
   return (
-    <div className="space-y-4">
-      {/* Toolbar */}
-      <div className="flex items-center justify-between">
-        <Breadcrumb path={currentPath} onNavigate={navigateToPath} />
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <h1 className="text-3xl font-bold tracking-tight">Files</h1>
+            {!isLoading && (
+              <Badge variant="secondary" className="text-xs">
+                {files.length} items
+              </Badge>
+            )}
+          </div>
+          <p className="text-muted-foreground">
+            Manage and organize your files
+          </p>
+        </div>
 
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm">
@@ -61,13 +75,37 @@ export function FileBrowserPage() {
         </div>
       </div>
 
+      {/* Breadcrumb Navigation */}
+      <div>
+        <div className="flex items-center space-x-2 text-sm text-muted-foreground mb-4">
+          <Breadcrumb path={currentPath} onNavigate={navigateToPath} />
+        </div>
+        <Separator />
+      </div>
+
       {/* File List */}
-      <Card>
+      <Card className="border-border/40">
         {isLoading ? (
           <LoadingSpinner message="Loading files..." />
         ) : files.length === 0 ? (
-          <div className="p-8 text-center">
-            <p className="text-muted-foreground">This folder is empty</p>
+          <div className="flex flex-col items-center justify-center p-8 text-center">
+            <div className="rounded-full bg-muted p-3 mb-4">
+              <FolderPlus className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">This folder is empty</h3>
+            <p className="text-muted-foreground mb-4">
+              Get started by uploading files or creating a new folder
+            </p>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm">
+                <Upload className="mr-2 h-4 w-4" />
+                Upload Files
+              </Button>
+              <Button variant="outline" size="sm">
+                <FolderPlus className="mr-2 h-4 w-4" />
+                New Folder
+              </Button>
+            </div>
           </div>
         ) : (
           <FileList
@@ -82,9 +120,19 @@ export function FileBrowserPage() {
 
       {/* Selection Info */}
       {selectedFiles.length > 0 && (
-        <div className="text-sm text-muted-foreground">
-          {selectedFiles.length} item{selectedFiles.length !== 1 ? 's' : ''}{' '}
-          selected
+        <div className="flex items-center justify-between rounded-lg border border-border/40 bg-muted/50 px-4 py-3">
+          <div className="text-sm text-muted-foreground">
+            {selectedFiles.length} item{selectedFiles.length !== 1 ? 's' : ''}{' '}
+            selected
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm">
+              Download
+            </Button>
+            <Button variant="destructive" size="sm">
+              Delete
+            </Button>
+          </div>
         </div>
       )}
     </div>

@@ -12,7 +12,9 @@ export function AppLayout({ children }: AppLayoutProps) {
       <Header />
       <div className="flex">
         <Sidebar />
-        <main className="flex-1 p-6">{children}</main>
+        <main className="flex-1 p-6 lg:p-8">
+          <div className="mx-auto max-w-screen-2xl">{children}</div>
+        </main>
       </div>
     </div>
   );

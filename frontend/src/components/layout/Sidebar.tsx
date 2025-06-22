@@ -1,9 +1,10 @@
 import { Button } from '../ui/button';
+import { Separator } from '../ui/separator';
 import { Home, Upload, Download, Trash2, Settings } from 'lucide-react';
 
 export function Sidebar() {
   return (
-    <aside className="w-64 border-r bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <aside className="w-64 min-h-[calc(100vh-3.5rem)] border-r border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="p-4 space-y-2">
         <Button variant="ghost" className="w-full justify-start">
           <Home className="mr-2 h-4 w-4" />
@@ -25,7 +26,8 @@ export function Sidebar() {
           Trash
         </Button>
 
-        <div className="pt-4 border-t">
+        <div className="pt-4">
+          <Separator className="mb-4" />
           <Button variant="ghost" className="w-full justify-start">
             <Settings className="mr-2 h-4 w-4" />
             Settings

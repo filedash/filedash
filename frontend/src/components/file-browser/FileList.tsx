@@ -8,7 +8,30 @@ import {
   TableRow,
 } from '../ui/table';
 import { Button } from '../ui/button';
-import { ChevronUp, ChevronDown } from 'lucide-react';
+import { Checkbox } from '../ui/checkbox';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from '../ui/context-menu';
+import {
+  ChevronUp,
+  ChevronDown,
+  MoreVertical,
+  Download,
+  Edit,
+  Trash2,
+  Copy,
+} from 'lucide-react';
 import { FileItem } from './FileItem';
 import type {
   FileItem as FileItemType,
@@ -78,14 +101,27 @@ export function FileList({
   return (
     <Table>
       <TableHeader>
-        <TableRow>
-          <TableHead className="w-12"></TableHead>
+        <TableRow className="border-border/40">
+          <TableHead className="w-12">
+            <Checkbox
+              checked={
+                selectedFiles.length === files.length && files.length > 0
+              }
+              onCheckedChange={(checked) => {
+                if (checked) {
+                  files.forEach((file) => onFileSelect(file.path, true));
+                } else {
+                  selectedFiles.forEach((path) => onFileSelect(path, false));
+                }
+              }}
+            />
+          </TableHead>
           <TableHead>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => handleSort('name')}
-              className="h-auto p-0 font-medium"
+              className="h-auto p-0 font-medium hover:bg-transparent"
             >
               Name
               <SortIcon field="name" />
@@ -96,7 +132,7 @@ export function FileList({
               variant="ghost"
               size="sm"
               onClick={() => handleSort('size')}
-              className="h-auto p-0 font-medium"
+              className="h-auto p-0 font-medium hover:bg-transparent"
             >
               Size
               <SortIcon field="size" />
@@ -107,44 +143,101 @@ export function FileList({
               variant="ghost"
               size="sm"
               onClick={() => handleSort('modified')}
-              className="h-auto p-0 font-medium"
+              className="h-auto p-0 font-medium hover:bg-transparent"
             >
               Modified
               <SortIcon field="modified" />
             </Button>
           </TableHead>
+          <TableHead className="w-12">
+            <span className="sr-only">Actions</span>
+          </TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {sortedFiles.map((file) => (
-          <TableRow
-            key={file.path}
-            className="cursor-pointer"
-            onClick={() => onFileClick(file)}
-            onDoubleClick={() => onFileDoubleClick(file)}
-          >
-            <TableCell>
-              <input
-                type="checkbox"
-                checked={selectedFiles.includes(file.path)}
-                onChange={(e) => {
-                  e.stopPropagation();
-                  onFileSelect(file.path, e.target.checked);
-                }}
-                onClick={(e) => e.stopPropagation()}
-                className="rounded border-gray-300"
-              />
-            </TableCell>
-            <TableCell>
-              <FileItem file={file} />
-            </TableCell>
-            <TableCell className="text-muted-foreground">
-              {file.is_directory ? '-' : formatFileSize(file.size)}
-            </TableCell>
-            <TableCell className="text-muted-foreground">
-              {formatDate(file.modified)}
+          <ContextMenu key={file.path}>
+            <ContextMenuTrigger asChild>
+              <TableRow
+                className="cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => onFileClick(file)}
+                onDoubleClick={() => onFileDoubleClick(file)}
+              >
+                <TableCell className="w-12">
+                  <Checkbox
+                    checked={selectedFiles.includes(file.path)}
+                    onCheckedChange={(checked) => {
+                      onFileSelect(file.path, !!checked);
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <FileItem file={file} />
+                  </div>
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  {file.is_directory ? '-' : formatFileSize(file.size)}
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  {formatDate(file.modified)}
+                </TableCell>
+                <TableCell className="w-12">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem>
+                    <Download className="mr-2 h-4 w-4" />
+                    Download
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Rename
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Copy className="mr-2 h-4 w-4" />
+                    Copy
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="text-destructive">
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </TableCell>
           </TableRow>
+            </ContextMenuTrigger>
+            <ContextMenuContent>
+              <ContextMenuItem>
+                <Download className="mr-2 h-4 w-4" />
+                Download
+              </ContextMenuItem>
+              <ContextMenuItem>
+                <Edit className="mr-2 h-4 w-4" />
+                Rename
+              </ContextMenuItem>
+              <ContextMenuItem>
+                <Copy className="mr-2 h-4 w-4" />
+                Copy
+              </ContextMenuItem>
+              <ContextMenuSeparator />
+              <ContextMenuItem className="text-destructive">
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </ContextMenuItem>
+            </ContextMenuContent>
+          </ContextMenu>
         ))}
       </TableBody>
     </Table>
