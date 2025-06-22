@@ -32,6 +32,7 @@ import {
   Trash2,
   Copy,
 } from 'lucide-react';
+import { ScrollArea } from '../ui/scroll-area';
 import { FileItem } from './FileItem';
 import type {
   FileItem as FileItemType,
@@ -99,24 +100,27 @@ export function FileList({
   };
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow className="border-border/40">
-          <TableHead className="w-12">
-            <Checkbox
-              checked={
-                selectedFiles.length === files.length && files.length > 0
-              }
-              onCheckedChange={(checked) => {
-                if (checked) {
-                  files.forEach((file) => onFileSelect(file.path, true));
-                } else {
-                  selectedFiles.forEach((path) => onFileSelect(path, false));
-                }
-              }}
-            />
-          </TableHead>
-          <TableHead>
+    <div className="w-full">
+      <ScrollArea className="w-full">
+        <div className="min-w-[600px]">
+          <Table>
+            <TableHeader>
+              <TableRow className="border-border/40">
+                <TableHead className="w-12">
+                  <Checkbox
+                    checked={
+                      selectedFiles.length === files.length && files.length > 0
+                    }
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        files.forEach((file) => onFileSelect(file.path, true));
+                      } else {
+                        selectedFiles.forEach((path) => onFileSelect(path, false));
+                      }
+                    }}
+                  />
+                </TableHead>
+          <TableHead className="min-w-[200px]">
             <Button
               variant="ghost"
               size="sm"
@@ -127,7 +131,7 @@ export function FileList({
               <SortIcon field="name" />
             </Button>
           </TableHead>
-          <TableHead>
+          <TableHead className="w-24 hidden sm:table-cell">
             <Button
               variant="ghost"
               size="sm"
@@ -138,7 +142,7 @@ export function FileList({
               <SortIcon field="size" />
             </Button>
           </TableHead>
-          <TableHead>
+          <TableHead className="w-40 hidden md:table-cell">
             <Button
               variant="ghost"
               size="sm"
@@ -177,10 +181,10 @@ export function FileList({
                     <FileItem file={file} />
                   </div>
                 </TableCell>
-                <TableCell className="text-muted-foreground">
+                <TableCell className="text-muted-foreground hidden sm:table-cell">
                   {file.is_directory ? '-' : formatFileSize(file.size)}
                 </TableCell>
-                <TableCell className="text-muted-foreground">
+                <TableCell className="text-muted-foreground hidden md:table-cell">
                   {formatDate(file.modified)}
                 </TableCell>
                 <TableCell className="w-12">
@@ -241,5 +245,8 @@ export function FileList({
         ))}
       </TableBody>
     </Table>
+        </div>
+      </ScrollArea>
+    </div>
   );
 }

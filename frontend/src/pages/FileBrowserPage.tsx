@@ -1,5 +1,8 @@
+import { useState } from 'react';
 import { useFileBrowser } from '../hooks/useFileBrowser';
 import { FileList } from '../components/file-browser/FileList';
+import { FileGrid } from '../components/file-browser/FileGrid';
+import { ViewToggle, type ViewMode } from '../components/file-browser/ViewToggle';
 import { Breadcrumb } from '../components/layout/Breadcrumb';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { ErrorDisplay } from '../components/common/ErrorDisplay';
@@ -10,6 +13,8 @@ import { Separator } from '../components/ui/separator';
 import { Upload, RefreshCw, FolderPlus } from 'lucide-react';
 
 export function FileBrowserPage() {
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  
   const {
     currentPath,
     files,
@@ -37,41 +42,72 @@ export function FileBrowserPage() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <h1 className="text-3xl font-bold tracking-tight">Files</h1>
-            {!isLoading && (
-              <Badge variant="secondary" className="text-xs">
-                {files.length} items
-              </Badge>
-            )}
+      <div className="flex flex-col space-y-4">
+        <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Files</h1>
+              {!isLoading && (
+                <Badge variant="secondary" className="text-xs">
+                  {files.length} items
+                </Badge>
+              )}
+            </div>
+            <p className="text-muted-foreground text-sm sm:text-base">
+              Manage and organize your files
+            </p>
           </div>
-          <p className="text-muted-foreground">
-            Manage and organize your files
-          </p>
+
+          {/* Desktop Action Buttons */}
+          <div className="hidden sm:flex items-center gap-3">
+            <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+            <Separator orientation="vertical" className="h-6" />
+            <Button variant="outline" size="sm">
+              <FolderPlus className="mr-2 h-4 w-4" />
+              New Folder
+            </Button>
+            <Button variant="outline" size="sm">
+              <Upload className="mr-2 h-4 w-4" />
+              Upload
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={refresh}
+              disabled={isLoading}
+            >
+              <RefreshCw
+                className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`}
+              />
+              Refresh
+            </Button>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
-            <FolderPlus className="mr-2 h-4 w-4" />
-            New Folder
-          </Button>
-          <Button variant="outline" size="sm">
-            <Upload className="mr-2 h-4 w-4" />
-            Upload
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={refresh}
-            disabled={isLoading}
-          >
-            <RefreshCw
-              className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`}
-            />
-            Refresh
-          </Button>
+        {/* Mobile Action Buttons */}
+        <div className="flex sm:hidden items-center justify-between gap-2">
+          <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm">
+              <FolderPlus className="h-4 w-4" />
+              <span className="sr-only">New Folder</span>
+            </Button>
+            <Button variant="outline" size="sm">
+              <Upload className="h-4 w-4" />
+              <span className="sr-only">Upload</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={refresh}
+              disabled={isLoading}
+            >
+              <RefreshCw
+                className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`}
+              />
+              <span className="sr-only">Refresh</span>
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -83,7 +119,7 @@ export function FileBrowserPage() {
         <Separator />
       </div>
 
-      {/* File List */}
+      {/* File List/Grid */}
       <Card className="border-border/40">
         {isLoading ? (
           <LoadingSpinner message="Loading files..." />
@@ -107,8 +143,16 @@ export function FileBrowserPage() {
               </Button>
             </div>
           </div>
-        ) : (
+        ) : viewMode === 'list' ? (
           <FileList
+            files={files}
+            onFileClick={() => {}} // Just for single click selection if needed
+            onFileDoubleClick={handleFileDoubleClick}
+            selectedFiles={selectedFiles}
+            onFileSelect={handleFileSelect}
+          />
+        ) : (
+          <FileGrid
             files={files}
             onFileClick={() => {}} // Just for single click selection if needed
             onFileDoubleClick={handleFileDoubleClick}
