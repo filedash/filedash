@@ -12,48 +12,54 @@ A high-performance file browser backend built with Rust and Axum, providing secu
 ### Installation & Setup
 
 1. **Clone and navigate to the project:**
+
    ```bash
    git clone <repository-url>
    cd filedash/backend
    ```
 
 2. **Install dependencies:**
+
    ```bash
    cargo build
    ```
 
 3. **Configure the application:**
-   
+
    Copy and edit the configuration file:
+
    ```bash
    cp config.toml config.local.toml  # Optional: for local overrides
    ```
-   
+
    Key configuration options in `config.toml`:
+
    ```toml
    [server]
    port = 8080
    host = "0.0.0.0"
-   
+
    [storage]
    home_directory = "./files"           # Directory to serve files from
    max_upload_size = 104857600         # 100 MB upload limit
-   
+
    [auth]
    jwt_secret = "your-secret-here"     # Change in production!
    enable_auth = true                  # Set to false to disable auth
    ```
 
 4. **Run the server:**
+
    ```bash
    cargo run
    ```
-   
+
    The server will start on `http://localhost:8080`
 
 ### Development Mode
 
 For development with auto-reload:
+
 ```bash
 cargo install cargo-watch
 cargo watch -x run
@@ -69,6 +75,7 @@ cargo build --release
 ## API Endpoints
 
 ### File Operations
+
 - `GET /api/files` - List files and directories
 - `GET /api/files/download/{path}` - Download a file
 - `POST /api/files/upload` - Upload files (multipart)
@@ -76,14 +83,17 @@ cargo build --release
 - `PUT /api/files/rename` - Rename/move a file
 
 ### Search
+
 - `GET /api/search?q={query}` - Fuzzy search files
 
 ### Authentication (if enabled)
+
 - `POST /api/auth/login` - Login with credentials
 - `POST /api/auth/logout` - Logout
 - `GET /api/auth/me` - Get current user info
 
 ### Health Check
+
 - `GET /health` - Server health status
 
 ## Configuration
@@ -133,11 +143,13 @@ By default, files are stored in the `./files` directory relative to the backend.
 ## Testing
 
 Run the test suite:
+
 ```bash
 cargo test
 ```
 
 Run with coverage:
+
 ```bash
 cargo install cargo-tarpaulin
 cargo tarpaulin --out html
@@ -159,10 +171,12 @@ cargo run
 ### Common Issues
 
 1. **Permission Denied Errors**
+
    - Ensure the storage directory has proper read/write permissions
    - Check that the port isn't already in use
 
 2. **File Upload Failures**
+
    - Verify `max_upload_size` configuration
    - Check available disk space
 
@@ -173,6 +187,7 @@ cargo run
 ### Debug Mode
 
 Run with debug logging:
+
 ```bash
 RUST_LOG=debug cargo run
 ```
