@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
 import { FileBrowserPage } from './pages/FileBrowserPage';
+import { Toaster } from './components/ui/sonner';
 import './App.css';
 
 // Create a client
@@ -24,6 +25,7 @@ function App() {
             <Route path="/browse/*" element={<FileBrowserPage />} />
           </Routes>
         </AppLayout>
+        <Toaster />
       </BrowserRouter>
     </QueryClientProvider>
   );

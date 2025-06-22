@@ -25,6 +25,7 @@ interface FileGridProps {
   onFileDoubleClick: (file: FileItemType) => void;
   selectedFiles: string[];
   onFileSelect: (path: string, selected: boolean) => void;
+  onDownload?: (file: FileItemType) => void;
 }
 
 export function FileGrid({
@@ -33,6 +34,7 @@ export function FileGrid({
   onFileDoubleClick,
   selectedFiles,
   onFileSelect,
+  onDownload,
 }: FileGridProps) {
   const handleFileClick = (file: FileItemType, e: React.MouseEvent) => {
     if (e.detail === 2) {
@@ -75,7 +77,13 @@ export function FileGrid({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDownload?.(file);
+                      }}
+                      disabled={file.is_directory}
+                    >
                       <Download className="mr-2 h-4 w-4" />
                       Download
                     </DropdownMenuItem>
@@ -123,7 +131,10 @@ export function FileGrid({
 
           {/* Context Menu */}
           <ContextMenuContent>
-            <ContextMenuItem>
+            <ContextMenuItem
+              onClick={() => onDownload?.(file)}
+              disabled={file.is_directory}
+            >
               <Download className="mr-2 h-4 w-4" />
               Download
             </ContextMenuItem>

@@ -85,17 +85,41 @@ class ApiService {
   }
 
   async uploadFile(endpoint: string, formData: FormData, onProgress?: (progress: number) => void): Promise<UploadResponse> {
-    return this.client.post(endpoint, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-      onUploadProgress: (progressEvent) => {
-        if (onProgress && progressEvent.total) {
-          const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          onProgress(progress);
-        }
-      },
-    });
+    try {
+      console.log('API Upload request:', {
+        endpoint,
+        baseURL: this.client.defaults.baseURL,
+        formDataEntries: Array.from(formData.entries()).map(([key, value]) => ({
+          key,
+          value: value instanceof File ? `File: ${value.name} (${value.size} bytes)` : value
+        }))
+      });
+
+      const response = await this.client.post(endpoint, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        onUploadProgress: (progressEvent) => {
+          if (onProgress && progressEvent.total) {
+            const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            onProgress(progress);
+          }
+        },
+      });
+
+      console.log('API Upload response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('API Upload error:', error);
+      if (axios.isAxiosError(error)) {
+        console.error('Upload error details:', {
+          response: error.response?.data,
+          status: error.response?.status,
+          statusText: error.response?.statusText
+        });
+      }
+      throw error;
+    }
   }
 
   async downloadFile(endpoint: string): Promise<Blob> {

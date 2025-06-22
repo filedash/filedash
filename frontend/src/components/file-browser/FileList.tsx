@@ -47,6 +47,7 @@ interface FileListProps {
   onFileDoubleClick: (file: FileItemType) => void;
   selectedFiles: string[];
   onFileSelect: (path: string, selected: boolean) => void;
+  onDownload?: (file: FileItemType) => void;
 }
 
 export function FileList({
@@ -55,6 +56,7 @@ export function FileList({
   onFileDoubleClick,
   selectedFiles,
   onFileSelect,
+  onDownload,
 }: FileListProps) {
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
@@ -202,7 +204,10 @@ export function FileList({
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => onDownload?.(file)}
+                              disabled={file.is_directory}
+                            >
                               <Download className="mr-2 h-4 w-4" />
                               Download
                             </DropdownMenuItem>
@@ -225,7 +230,10 @@ export function FileList({
                     </TableRow>
                   </ContextMenuTrigger>
                   <ContextMenuContent>
-                    <ContextMenuItem>
+                    <ContextMenuItem
+                      onClick={() => onDownload?.(file)}
+                      disabled={file.is_directory}
+                    >
                       <Download className="mr-2 h-4 w-4" />
                       Download
                     </ContextMenuItem>

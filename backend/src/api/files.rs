@@ -55,6 +55,11 @@ struct UploadError {
     error: String,
 }
 
+struct FileUpload {
+    filename: String,
+    data: Vec<u8>,
+}
+
 async fn upload_files(
     State(config): State<AppState>,
     mut multipart: Multipart,
@@ -63,7 +68,9 @@ async fn upload_files(
     let mut uploaded = Vec::new();
     let mut failed = Vec::new();
     let mut target_path = "/".to_string();
+    let mut files_to_upload = Vec::new();
 
+    // First pass: collect all fields
     while let Some(field) = multipart.next_field().await.map_err(|e| {
         ApiError::BadRequest {
             message: format!("Invalid multipart data: {}", e),
@@ -93,13 +100,21 @@ async fn upload_files(
                 }
             })?;
 
-            // Upload file
-            match file_service.upload_file(&target_path, &filename, data.to_vec()).await {
-                Ok(file_info) => uploaded.push(file_info),
-                Err(e) => failed.push(UploadError {
-                    filename,
+            files_to_upload.push(FileUpload { filename, data: data.to_vec() });
+        }
+    }
+
+    // Second pass: upload all files to the target path
+    for file_upload in files_to_upload {
+        match file_service.upload_file(&target_path, &file_upload.filename, file_upload.data).await {
+            Ok(file_info) => {
+                uploaded.push(file_info);
+            },
+            Err(e) => {
+                failed.push(UploadError {
+                    filename: file_upload.filename,
                     error: e.to_string(),
-                }),
+                });
             }
         }
     }
