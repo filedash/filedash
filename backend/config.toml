@@ -1,0 +1,14 @@
+[server]
+port = 8080
+host = "0.0.0.0"
+
+[storage]
+home_directory = "./files"
+allowed_extensions = ["*"]  # Allow all file types
+max_upload_size = 104857600  # 100 MB in bytes
+frontend_dist_path = "./frontend_dist"
+
+[auth]
+jwt_secret = "development_secret_change_this_in_production"
+token_expiration = 86400  # 24 hours in seconds
+enable_auth = true

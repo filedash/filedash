@@ -1,0 +1,17 @@
+Welcome to FileDash!
+
+This is a sample file to test the file browser functionality.
+
+You can:
+- View this file in the browser
+- Download this file
+- Upload new files
+- Delete files and directories
+
+Stage 1 implementation includes:
+✅ File listing
+✅ File upload  
+✅ File download
+✅ File deletion
+✅ Path security validation
+✅ Error handling

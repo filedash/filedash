@@ -1,0 +1,49 @@
+[package]
+name = "filedash"
+version = "0.1.0"
+edition = "2021"
+authors = ["FileDash Developers"]
+description = "A high-performance, minimal file browser"
+
+[dependencies]
+# Web framework
+axum = { version = "0.6", features = ["multipart", "headers", "macros"] }
+tower = "0.4"
+tower-http = { version = "0.4", features = ["fs", "trace", "cors"] }
+tokio = { version = "1", features = ["full"] }
+hyper = "0.14"
+
+# Serialization & Deserialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Configuration
+config = "0.13"
+toml = "0.8"
+
+# Authentication
+jsonwebtoken = "9.2"
+argon2 = "0.5"
+rand = "0.8"
+
+# Logging & Error handling
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+anyhow = "1.0"
+thiserror = "1.0"
+
+# Utility
+chrono = { version = "0.4", features = ["serde"] }
+async-trait = "0.1"
+mime_guess = "2.0"
+regex = "1.10"
+futures = "0.3"
+bytes = "1.5"
+walkdir = "2.4"
+path-clean = "1.0"
+tokio-util = { version = "0.7", features = ["io"] }
+tokio-stream = { version = "0.1", features = ["fs"] }
+
+[dev-dependencies]
+reqwest = { version = "0.11", features = ["json", "multipart"] }
+anyhow = "1.0"
