@@ -1,38 +1,31 @@
-import { useState } from 'react';
-import reactLogo from './assets/react.svg';
-import viteLogo from '/vite.svg';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AppLayout } from './components/layout/AppLayout';
+import { FileBrowserPage } from './pages/FileBrowserPage';
 import './App.css';
-import { Button } from './components/ui/button';
+
+// Create a client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 30000, // 30 seconds
+    },
+  },
+});
 
 function App() {
-  const [count, setCount] = useState(0);
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <Button
-          variant="default"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          count is {count}
-        </Button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <AppLayout>
+          <Routes>
+            <Route path="/" element={<FileBrowserPage />} />
+            <Route path="/browse/*" element={<FileBrowserPage />} />
+          </Routes>
+        </AppLayout>
+      </BrowserRouter>
+    </QueryClientProvider>
   );
 }
 
