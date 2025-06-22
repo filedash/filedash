@@ -115,136 +115,138 @@ export function FileList({
                       if (checked) {
                         files.forEach((file) => onFileSelect(file.path, true));
                       } else {
-                        selectedFiles.forEach((path) => onFileSelect(path, false));
+                        selectedFiles.forEach((path) =>
+                          onFileSelect(path, false)
+                        );
                       }
                     }}
                   />
                 </TableHead>
-          <TableHead className="min-w-[200px]">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleSort('name')}
-              className="h-auto p-0 font-medium hover:bg-transparent"
-            >
-              Name
-              <SortIcon field="name" />
-            </Button>
-          </TableHead>
-          <TableHead className="w-24 hidden sm:table-cell">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleSort('size')}
-              className="h-auto p-0 font-medium hover:bg-transparent"
-            >
-              Size
-              <SortIcon field="size" />
-            </Button>
-          </TableHead>
-          <TableHead className="w-40 hidden md:table-cell">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleSort('modified')}
-              className="h-auto p-0 font-medium hover:bg-transparent"
-            >
-              Modified
-              <SortIcon field="modified" />
-            </Button>
-          </TableHead>
-          <TableHead className="w-12">
-            <span className="sr-only">Actions</span>
-          </TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {sortedFiles.map((file) => (
-          <ContextMenu key={file.path}>
-            <ContextMenuTrigger asChild>
-              <TableRow
-                className="cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => onFileClick(file)}
-                onDoubleClick={() => onFileDoubleClick(file)}
-              >
-                <TableCell className="w-12">
-                  <Checkbox
-                    checked={selectedFiles.includes(file.path)}
-                    onCheckedChange={(checked) => {
-                      onFileSelect(file.path, !!checked);
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <FileItem file={file} />
-                  </div>
-                </TableCell>
-                <TableCell className="text-muted-foreground hidden sm:table-cell">
-                  {file.is_directory ? '-' : formatFileSize(file.size)}
-                </TableCell>
-                <TableCell className="text-muted-foreground hidden md:table-cell">
-                  {formatDate(file.modified)}
-                </TableCell>
-                <TableCell className="w-12">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
+                <TableHead className="min-w-[200px]">
                   <Button
                     variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={(e) => e.stopPropagation()}
+                    size="sm"
+                    onClick={() => handleSort('name')}
+                    className="h-auto p-0 font-medium hover:bg-transparent"
                   >
-                    <MoreVertical className="h-4 w-4" />
+                    Name
+                    <SortIcon field="name" />
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem>
-                    <Download className="mr-2 h-4 w-4" />
-                    Download
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Rename
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Copy className="mr-2 h-4 w-4" />
-                    Copy
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-destructive">
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </TableCell>
-          </TableRow>
-            </ContextMenuTrigger>
-            <ContextMenuContent>
-              <ContextMenuItem>
-                <Download className="mr-2 h-4 w-4" />
-                Download
-              </ContextMenuItem>
-              <ContextMenuItem>
-                <Edit className="mr-2 h-4 w-4" />
-                Rename
-              </ContextMenuItem>
-              <ContextMenuItem>
-                <Copy className="mr-2 h-4 w-4" />
-                Copy
-              </ContextMenuItem>
-              <ContextMenuSeparator />
-              <ContextMenuItem className="text-destructive">
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
-              </ContextMenuItem>
-            </ContextMenuContent>
-          </ContextMenu>
-        ))}
-      </TableBody>
-    </Table>
+                </TableHead>
+                <TableHead className="w-24 hidden sm:table-cell">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleSort('size')}
+                    className="h-auto p-0 font-medium hover:bg-transparent"
+                  >
+                    Size
+                    <SortIcon field="size" />
+                  </Button>
+                </TableHead>
+                <TableHead className="w-40 hidden md:table-cell">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleSort('modified')}
+                    className="h-auto p-0 font-medium hover:bg-transparent"
+                  >
+                    Modified
+                    <SortIcon field="modified" />
+                  </Button>
+                </TableHead>
+                <TableHead className="w-12">
+                  <span className="sr-only">Actions</span>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sortedFiles.map((file) => (
+                <ContextMenu key={file.path}>
+                  <ContextMenuTrigger asChild>
+                    <TableRow
+                      className="cursor-pointer hover:bg-muted/50 transition-colors"
+                      onClick={() => onFileClick(file)}
+                      onDoubleClick={() => onFileDoubleClick(file)}
+                    >
+                      <TableCell className="w-12">
+                        <Checkbox
+                          checked={selectedFiles.includes(file.path)}
+                          onCheckedChange={(checked) => {
+                            onFileSelect(file.path, !!checked);
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <FileItem file={file} />
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground hidden sm:table-cell">
+                        {file.is_directory ? '-' : formatFileSize(file.size)}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground hidden md:table-cell">
+                        {formatDate(file.modified)}
+                      </TableCell>
+                      <TableCell className="w-12">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem>
+                              <Download className="mr-2 h-4 w-4" />
+                              Download
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Rename
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <Copy className="mr-2 h-4 w-4" />
+                              Copy
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-destructive">
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  </ContextMenuTrigger>
+                  <ContextMenuContent>
+                    <ContextMenuItem>
+                      <Download className="mr-2 h-4 w-4" />
+                      Download
+                    </ContextMenuItem>
+                    <ContextMenuItem>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Rename
+                    </ContextMenuItem>
+                    <ContextMenuItem>
+                      <Copy className="mr-2 h-4 w-4" />
+                      Copy
+                    </ContextMenuItem>
+                    <ContextMenuSeparator />
+                    <ContextMenuItem className="text-destructive">
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete
+                    </ContextMenuItem>
+                  </ContextMenuContent>
+                </ContextMenu>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       </ScrollArea>
     </div>

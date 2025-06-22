@@ -14,13 +14,7 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
 import { Button } from '../ui/button';
-import {
-  MoreVertical,
-  Download,
-  Edit,
-  Trash2,
-  Copy,
-} from 'lucide-react';
+import { MoreVertical, Download, Edit, Trash2, Copy } from 'lucide-react';
 import { FileGridIcon } from './FileGridIcon';
 import type { FileItem as FileItemType } from '../../types/file';
 import { formatFileSize } from '../../utils/file';
@@ -58,10 +52,11 @@ export function FileGrid({
           <ContextMenuTrigger>
             <Card
               className={`
-                group relative p-2 sm:p-3 cursor-pointer transition-all hover:shadow-md
-                ${selectedFiles.includes(file.path) 
-                  ? 'ring-2 ring-primary bg-primary/5' 
-                  : 'hover:bg-accent/50'
+                group relative cursor-pointer transition-all hover:shadow-md border-border/40
+                ${
+                  selectedFiles.includes(file.path)
+                    ? 'ring-2 ring-primary bg-primary/5 border-primary/20'
+                    : 'hover:bg-accent/30 hover:border-border'
                 }
               `}
               onClick={(e) => handleFileClick(file, e)}
@@ -102,20 +97,23 @@ export function FileGrid({
               </div>
 
               {/* File Content */}
-              <div className="flex flex-col items-center text-center space-y-3 p-2">
+              <div className="flex flex-col items-center text-center space-y-2 p-3 min-h-[120px] justify-center">
                 {/* Large File Icon */}
-                <div className="flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20">
+                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16">
                   <FileGridIcon file={file} />
                 </div>
-                
+
                 {/* File Name */}
-                <div className="w-full">
-                  <p className="text-sm font-medium truncate px-1" title={file.name}>
+                <div className="w-full space-y-1">
+                  <p
+                    className="text-sm font-medium truncate px-1 leading-tight"
+                    title={file.name}
+                  >
                     {file.name}
                   </p>
-                  
+
                   {/* File Size */}
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-xs text-muted-foreground">
                     {file.is_directory ? 'Folder' : formatFileSize(file.size)}
                   </p>
                 </div>

@@ -2,7 +2,10 @@ import { useState } from 'react';
 import { useFileBrowser } from '../hooks/useFileBrowser';
 import { FileList } from '../components/file-browser/FileList';
 import { FileGrid } from '../components/file-browser/FileGrid';
-import { ViewToggle, type ViewMode } from '../components/file-browser/ViewToggle';
+import {
+  ViewToggle,
+  type ViewMode,
+} from '../components/file-browser/ViewToggle';
 import { Breadcrumb } from '../components/layout/Breadcrumb';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { ErrorDisplay } from '../components/common/ErrorDisplay';
@@ -14,7 +17,7 @@ import { Upload, RefreshCw, FolderPlus } from 'lucide-react';
 
 export function FileBrowserPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
-  
+
   const {
     currentPath,
     files,
@@ -46,7 +49,9 @@ export function FileBrowserPage() {
         <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Files</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+                Files
+              </h1>
               {!isLoading && (
                 <Badge variant="secondary" className="text-xs">
                   {files.length} items

@@ -27,7 +27,7 @@ export function Header() {
             <Search className="h-4 w-4" />
             <span className="sr-only">Search</span>
           </Button>
-          
+
           <Button variant="ghost" size="icon">
             <Settings className="h-4 w-4" />
             <span className="sr-only">Settings</span>

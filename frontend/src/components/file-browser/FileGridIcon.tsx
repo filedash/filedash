@@ -8,7 +8,5 @@ interface FileGridIconProps {
 export function FileGridIcon({ file }: FileGridIconProps) {
   const Icon = getFileIcon(file.is_directory, file.mime_type, file.name);
 
-  return (
-    <Icon className="w-full h-full text-muted-foreground" />
-  );
+  return <Icon className="w-full h-full text-muted-foreground" />;
 }
