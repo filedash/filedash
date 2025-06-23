@@ -34,6 +34,25 @@ pub enum ApiError {
     
     #[error("Bad request: {message}")]
     BadRequest { message: String },
+    
+    // Authentication errors
+    #[error("Unauthorized: {message}")]
+    Unauthorized { message: String },
+    
+    #[error("Forbidden: {message}")]
+    Forbidden { message: String },
+    
+    #[error("Resource not found: {resource} with id {id}")]
+    NotFound { resource: String, id: String },
+    
+    #[error("Conflict: {message}")]
+    Conflict { message: String },
+    
+    #[error("Internal server error: {message}")]
+    InternalServerError { message: String },
+    
+    #[error("Database error: {0}")]
+    Database(#[from] sqlx::Error),
 }
 
 #[derive(Serialize, Deserialize)]
@@ -99,6 +118,42 @@ impl IntoResponse for ApiError {
                 StatusCode::BAD_REQUEST,
                 "bad_request",
                 message.clone(),
+                None,
+            ),
+            ApiError::Unauthorized { message } => (
+                StatusCode::UNAUTHORIZED,
+                "unauthorized",
+                message.clone(),
+                None,
+            ),
+            ApiError::Forbidden { message } => (
+                StatusCode::FORBIDDEN,
+                "forbidden",
+                message.clone(),
+                None,
+            ),
+            ApiError::NotFound { resource, id } => (
+                StatusCode::NOT_FOUND,
+                "not_found",
+                format!("{} with id {} not found", resource, id),
+                Some(serde_json::json!({ "resource": resource, "id": id })),
+            ),
+            ApiError::Conflict { message } => (
+                StatusCode::CONFLICT,
+                "conflict",
+                message.clone(),
+                None,
+            ),
+            ApiError::InternalServerError { message } => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "internal_server_error",
+                message.clone(),
+                None,
+            ),
+            ApiError::Database(_) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "database_error",
+                "A database error occurred".to_string(),
                 None,
             ),
         };

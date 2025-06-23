@@ -5,6 +5,7 @@ use std::path::PathBuf;
 pub struct Config {
     pub server: ServerConfig,
     pub storage: StorageConfig,
+    pub database: DatabaseConfig,
     pub auth: AuthConfig,
 }
 
@@ -24,12 +25,38 @@ pub struct StorageConfig {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DatabaseConfig {
+    #[serde(default = "default_database_url")]
+    pub url: String,
+    #[serde(default = "default_max_connections")]
+    pub max_connections: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuthConfig {
     pub jwt_secret: String,
-    pub token_expiration: u64,
+    #[serde(default = "default_token_expiration_hours")]
+    pub token_expiration_hours: i64,
+    #[serde(default = "default_enable_auth")]
     pub enable_auth: bool,
 }
 
 fn default_frontend_dist_path() -> PathBuf {
     PathBuf::from("frontend_dist")
+}
+
+fn default_database_url() -> String {
+    "sqlite://filedash.db".to_string()
+}
+
+fn default_max_connections() -> u32 {
+    10
+}
+
+fn default_token_expiration_hours() -> i64 {
+    24
+}
+
+fn default_enable_auth() -> bool {
+    true
 }

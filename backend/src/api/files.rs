@@ -1,10 +1,11 @@
 use crate::{
     errors::ApiError,
+    middleware::AuthContext,
     services::{FileService, FileInfo},
     AppState,
 };
 use axum::{
-    extract::{Multipart, Path, Query, State},
+    extract::{Extension, Multipart, Path, Query, State},
     http::{header, StatusCode},
     response::{IntoResponse, Response},
     routing::{delete, get, post},
@@ -32,11 +33,12 @@ struct ListResponse {
 }
 
 async fn list_files(
-    State(config): State<AppState>,
+    State(app_state): State<AppState>,
+    Extension(_auth_context): Extension<AuthContext>,
     Query(query): Query<ListQuery>,
 ) -> Result<Json<ListResponse>, ApiError> {
     let path = query.path.unwrap_or_else(|| "/".to_string());
-    let file_service = FileService::new(config.as_ref().clone());
+    let file_service = FileService::new(app_state.config.as_ref().clone());
     
     let files = file_service.list_files(&path).await?;
     
@@ -61,10 +63,11 @@ struct FileUpload {
 }
 
 async fn upload_files(
-    State(config): State<AppState>,
+    State(app_state): State<AppState>,
+    Extension(_auth_context): Extension<AuthContext>,
     mut multipart: Multipart,
 ) -> Result<Json<UploadResponse>, ApiError> {
-    let file_service = FileService::new(config.as_ref().clone());
+    let file_service = FileService::new(app_state.config.as_ref().clone());
     let mut uploaded = Vec::new();
     let mut failed = Vec::new();
     let mut target_path = "/".to_string();
@@ -123,10 +126,11 @@ async fn upload_files(
 }
 
 async fn download_file(
-    State(config): State<AppState>,
+    State(app_state): State<AppState>,
+    Extension(_auth_context): Extension<AuthContext>,
     Path(path): Path<String>,
 ) -> Result<Response, ApiError> {
-    let file_service = FileService::new(config.as_ref().clone());
+    let file_service = FileService::new(app_state.config.as_ref().clone());
     let (data, filename) = file_service.download_file(&path).await?;
     
     let headers = [
@@ -147,10 +151,11 @@ struct DeleteResponse {
 }
 
 async fn delete_file(
-    State(config): State<AppState>,
+    State(app_state): State<AppState>,
+    Extension(_auth_context): Extension<AuthContext>,
     Path(path): Path<String>,
 ) -> Result<Json<DeleteResponse>, ApiError> {
-    let file_service = FileService::new(config.as_ref().clone());
+    let file_service = FileService::new(app_state.config.as_ref().clone());
     file_service.delete_file(&path).await?;
     
     Ok(Json(DeleteResponse {
