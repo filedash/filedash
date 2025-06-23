@@ -41,3 +41,4 @@ Thumbs.db
 /backend/frontend_dist
 
 Note.txt
+backend/data/*.db
