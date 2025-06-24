@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: cd frontend && npm ci
-      - run: cd frontend && VITE_USE_MOCK_API=true npm run build
+      - run: VITE_USE_MOCK_API=true npm run build
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
