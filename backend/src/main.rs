@@ -3,7 +3,7 @@ use std::sync::Arc;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use filedash::config;
-use filedash::build_app;
+use filedash::create_app;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -28,8 +28,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         tracing::info!("Created storage directory: {:?}", files_dir);
     }
     
-    // Build application with routes
-    let app = build_app(config);
+    // Build application with routes (async now due to database initialization)
+    let app = create_app(config).await?;
 
     // Run the server
     let addr = SocketAddr::from((

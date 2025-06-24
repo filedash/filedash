@@ -8,7 +8,11 @@ allowed_extensions = ["*"]  # Allow all file types
 max_upload_size = 104857600  # 100 MB in bytes
 frontend_dist_path = "./frontend_dist"
 
+[database]
+url = "sqlite:./data/filedash.db"
+max_connections = 10
+
 [auth]
-jwt_secret = "development_secret_change_this_in_production"
-token_expiration = 86400  # 24 hours in seconds
+jwt_secret = "development_secret_change_this_in_production_make_it_at_least_32_characters_long"
+token_expiration_hours = 24
 enable_auth = true
