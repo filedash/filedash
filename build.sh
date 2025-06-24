@@ -7,7 +7,15 @@ echo "🚀 Building FileDash application..."
 echo "📦 Building frontend..."
 cd frontend
 npm install
-npm run build
+
+# Check if we should use mock API (for Docker builds, default to false)
+if [ "${USE_MOCK_API:-false}" = "true" ]; then
+    echo "🔧 Building with mock API enabled"
+    VITE_USE_MOCK_API=true npm run build
+else
+    echo "🔧 Building with real API"
+    npm run build
+fi
 cd ..
 
 # Build backend
