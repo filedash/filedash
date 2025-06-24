@@ -1,9 +1,13 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from 'axios';
 import type { UploadResponse } from '../types/file';
+import { mockApiService } from './mockApi';
 
 export interface RequestOptions extends AxiosRequestConfig {
   requiresAuth?: boolean;
 }
+
+// Check if we should use mock API
+const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === 'true';
 
 class ApiService {
   private client: AxiosInstance;
@@ -50,41 +54,66 @@ class ApiService {
   setToken(token: string) {
     this.token = token;
     localStorage.setItem('auth_token', token);
+    if (USE_MOCK_API) {
+      mockApiService.setToken(token);
+    }
   }
 
   clearToken() {
     this.token = null;
     localStorage.removeItem('auth_token');
+    if (USE_MOCK_API) {
+      mockApiService.clearToken();
+    }
   }
 
   getToken(): string | null {
     if (!this.token) {
       this.token = localStorage.getItem('auth_token');
     }
+    if (USE_MOCK_API) {
+      return mockApiService.getToken();
+    }
     return this.token;
   }
 
   async get<T>(endpoint: string, options?: RequestOptions): Promise<T> {
+    if (USE_MOCK_API) {
+      return mockApiService.get<T>(endpoint);
+    }
     const response: AxiosResponse<T> = await this.client.get(endpoint, options);
     return response.data;
   }
 
   async post<T>(endpoint: string, data?: unknown, options?: RequestOptions): Promise<T> {
+    if (USE_MOCK_API) {
+      return mockApiService.post<T>(endpoint, data);
+    }
     const response: AxiosResponse<T> = await this.client.post(endpoint, data, options);
     return response.data;
   }
 
   async put<T>(endpoint: string, data?: unknown, options?: RequestOptions): Promise<T> {
+    if (USE_MOCK_API) {
+      return mockApiService.put<T>(endpoint, data);
+    }
     const response: AxiosResponse<T> = await this.client.put(endpoint, data, options);
     return response.data;
   }
 
   async delete<T>(endpoint: string, options?: RequestOptions): Promise<T> {
+    if (USE_MOCK_API) {
+      return mockApiService.delete<T>(endpoint);
+    }
     const response: AxiosResponse<T> = await this.client.delete(endpoint, options);
     return response.data;
   }
 
   async uploadFile(endpoint: string, formData: FormData, onProgress?: (progress: number) => void): Promise<UploadResponse> {
+    if (USE_MOCK_API) {
+      return mockApiService.uploadFile(endpoint, formData, onProgress);
+    }
+
     try {
       console.log('API Upload request:', {
         endpoint,
@@ -123,6 +152,10 @@ class ApiService {
   }
 
   async downloadFile(endpoint: string): Promise<Blob> {
+    if (USE_MOCK_API) {
+      return mockApiService.downloadFile(endpoint);
+    }
+
     const response = await this.client.get(endpoint, {
       responseType: 'blob',
     });
