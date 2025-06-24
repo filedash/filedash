@@ -22,6 +22,7 @@ jobs:
           projectId: filedashdemo
         env:
           FIREBASE_CLI_EXPERIMENTS: webframeworks
+          VITE_USE_MOCK_API: true
     defaults:
       run:
         working-directory: frontend
