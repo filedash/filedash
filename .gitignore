@@ -42,3 +42,7 @@ Thumbs.db
 
 Note.txt
 backend/data/*.db
+
+# Firebase
+firebase-debug.log
+.firebase/
