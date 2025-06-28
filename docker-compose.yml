@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  filedash:
+    build: .
+    container_name: filedash-app
+    restart: unless-stopped
+    ports:
+      - '8080:8080'
+    volumes:
+      # Persistent file storage - this is where uploaded files are stored
+      - ./data/files:/app/files
+      # Database storage
+      - ./data/database:/app/data
+      # Application logs
+      - ./data/logs:/app/logs
+    environment:
+      - RUST_LOG=info
+      - FILEDASH_AUTH__JWT_SECRET=${JWT_SECRET:-change_this_in_production}

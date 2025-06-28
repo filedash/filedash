@@ -1,0 +1,70 @@
+# Git
+.git
+.gitignore
+README.md
+.gitattributes
+
+# Documentation
+*.md
+docs/
+
+# Development files
+.env
+.env.local
+.env.example
+*.log
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Rust
+target/
+Cargo.lock
+**/target/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Deployment
+docker-compose*.yml
+deploy-*.sh
+nginx.conf
+ssl/
+
+# Testing
+tests/
+**/*test*
+**/testing/
+
+# Backup files
+backups/
+*.backup
+*.bak
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Build artifacts (keep only what we need)
+backend/target/
+frontend/dist/
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+
+# Data directories (these are mounted as volumes)
+data/
+files/
+logs/

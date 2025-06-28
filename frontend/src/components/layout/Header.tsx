@@ -1,8 +1,24 @@
 import { Button } from '../ui/button';
-import { Folder, Search, Settings } from 'lucide-react';
+import { Folder, Search, Settings, LogOut } from 'lucide-react';
 import { Input } from '../ui/input';
+import { useAuth } from '../../hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 export function Header() {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      logout();
+      toast.success('Successfully logged out');
+      navigate('/login');
+    } catch (error) {
+      toast.error('Logout failed');
+    }
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 max-w-screen-2xl items-center px-4 sm:px-6">
@@ -31,6 +47,11 @@ export function Header() {
           <Button variant="ghost" size="icon">
             <Settings className="h-4 w-4" />
             <span className="sr-only">Settings</span>
+          </Button>
+
+          <Button variant="ghost" size="icon" onClick={handleLogout}>
+            <LogOut className="h-4 w-4" />
+            <span className="sr-only">Logout</span>
           </Button>
         </div>
       </div>

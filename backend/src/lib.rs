@@ -8,8 +8,9 @@ use tower::ServiceBuilder;
 use tower_http::{
     cors::CorsLayer,
     trace::TraceLayer,
-    services::ServeDir,
+    services::{ServeDir, ServeFile},
 };
+use std::path::Path;
 
 pub mod api;
 pub mod config;
@@ -77,11 +78,16 @@ pub async fn create_app(config: Arc<Config>) -> Result<Router, Box<dyn std::erro
         .merge(protected_routes);
     
     // Build main application
+    let frontend_dir = Path::new(&config.storage.frontend_dist_path);
+    let index_file = frontend_dir.join("index.html");
+    
     let app = Router::new()
         .route("/health", get(health_check))
         .nest("/api", api_routes)
-        // Serve static files (frontend) - unprotected
-        .nest_service("/", ServeDir::new(&config.storage.frontend_dist_path))
+        // Serve frontend static files with fallback to index.html for SPA routing
+        .nest_service("/", ServeDir::new(&config.storage.frontend_dist_path)
+            .not_found_service(ServeFile::new(&index_file)))
+        .with_state(state)
         .layer(
             ServiceBuilder::new()
                 .layer(TraceLayer::new_for_http())
