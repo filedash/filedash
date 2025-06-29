@@ -1,6 +1,6 @@
 # FileDash
 
-A modern, minimal, high-performance file browser.
+A modern, minimal, high-performance, rust based file browser for web.
 
 ## Tech Stack
 
@@ -19,12 +19,20 @@ A modern, minimal, high-performance file browser.
 - 🖼️ File previews (images, PDFs, text)
 - 🛡️ Security: sandboxed access, path validation, DOS protection
 
-## Project Goals
 
-- Full backend in Rust (Axum preferred)
-- REST API for file operations + search
-- Frontend served statically by the backend
-- Dockerfile for unified deployment
+## Getting Started
 
-## Project Structure
+### Prerequisites
+- Docker and Docker Compose installed
 
+### Quick Start
+
+```bash
+docker run -d \
+  -p 8080:8080 \
+  -v ./data/files:/app/files \
+  -v ./data/database:/app/data \
+  -v ./data/logs:/app/logs \
+  -e FILEDASH_AUTH__JWT_SECRET=your_secure_secret \
+  rahulkatiyar1995/filedash:latest
+```
