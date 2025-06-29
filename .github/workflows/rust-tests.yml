@@ -35,7 +35,3 @@ jobs:
       - name: Run tests
         working-directory: ./backend
         run: cargo test -- --nocapture
-
-      - name: Run integration tests
-        working-directory: ./backend
-        run: cargo test --test api_tests -- --nocapture
