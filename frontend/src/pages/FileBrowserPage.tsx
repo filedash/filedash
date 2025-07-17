@@ -22,18 +22,6 @@ export function FileBrowserPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const {
-    currentPath,
-    files,
-    selectedFiles,
-    isLoading,
-    error,
-    navigateToPath,
-    handleFileDoubleClick,
-    handleFileSelect,
-    refresh,
-  } = useFileBrowser();
-
   // Download handler
   const handleDownload = async (file: FileItem) => {
     try {
@@ -57,6 +45,18 @@ export function FileBrowserPage() {
       console.error('Download failed:', error);
     }
   };
+
+  const {
+    currentPath,
+    files,
+    selectedFiles,
+    isLoading,
+    error,
+    navigateToPath,
+    handleFileClick,
+    handleFileSelect,
+    refresh,
+  } = useFileBrowser('/', handleDownload);
 
   // Upload handler
   const handleUpload = async (files: FileList) => {
@@ -138,11 +138,16 @@ export function FileBrowserPage() {
           <div className="hidden sm:flex items-center gap-3">
             <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
             <Separator orientation="vertical" className="h-6" />
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="cursor-pointer">
               <FolderPlus className="mr-2 h-4 w-4" />
               New Folder
             </Button>
-            <Button variant="outline" size="sm" onClick={triggerUpload}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={triggerUpload}
+              className="cursor-pointer"
+            >
               <Upload className="mr-2 h-4 w-4" />
               Upload
             </Button>
@@ -151,6 +156,7 @@ export function FileBrowserPage() {
               size="sm"
               onClick={refresh}
               disabled={isLoading}
+              className="cursor-pointer disabled:cursor-not-allowed"
             >
               <RefreshCw
                 className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`}
@@ -164,11 +170,16 @@ export function FileBrowserPage() {
         <div className="flex sm:hidden items-center justify-between gap-2">
           <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="cursor-pointer">
               <FolderPlus className="h-4 w-4" />
               <span className="sr-only">New Folder</span>
             </Button>
-            <Button variant="outline" size="sm" onClick={triggerUpload}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={triggerUpload}
+              className="cursor-pointer"
+            >
               <Upload className="h-4 w-4" />
               <span className="sr-only">Upload</span>
             </Button>
@@ -177,6 +188,7 @@ export function FileBrowserPage() {
               size="sm"
               onClick={refresh}
               disabled={isLoading}
+              className="cursor-pointer disabled:cursor-not-allowed"
             >
               <RefreshCw
                 className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`}
@@ -209,11 +221,16 @@ export function FileBrowserPage() {
               Get started by uploading files or creating a new folder
             </p>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={triggerUpload}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={triggerUpload}
+                className="cursor-pointer"
+              >
                 <Upload className="mr-2 h-4 w-4" />
                 Upload Files
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="cursor-pointer">
                 <FolderPlus className="mr-2 h-4 w-4" />
                 New Folder
               </Button>
@@ -222,8 +239,7 @@ export function FileBrowserPage() {
         ) : viewMode === 'list' ? (
           <FileList
             files={files}
-            onFileClick={() => {}} // Just for single click selection if needed
-            onFileDoubleClick={handleFileDoubleClick}
+            onFileClick={handleFileClick}
             selectedFiles={selectedFiles}
             onFileSelect={handleFileSelect}
             onDownload={handleDownload}
@@ -231,8 +247,7 @@ export function FileBrowserPage() {
         ) : (
           <FileGrid
             files={files}
-            onFileClick={() => {}} // Just for single click selection if needed
-            onFileDoubleClick={handleFileDoubleClick}
+            onFileClick={handleFileClick}
             selectedFiles={selectedFiles}
             onFileSelect={handleFileSelect}
             onDownload={handleDownload}

@@ -99,7 +99,9 @@ export function LoginPage() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="cursor-pointer">
+                Email
+              </Label>
               <Input
                 id="email"
                 type="email"
@@ -112,7 +114,9 @@ export function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="cursor-pointer">
+                Password
+              </Label>
               <Input
                 id="password"
                 type="password"
@@ -124,7 +128,11 @@ export function LoginPage() {
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button
+              type="submit"
+              className="w-full cursor-pointer"
+              disabled={isLoading}
+            >
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

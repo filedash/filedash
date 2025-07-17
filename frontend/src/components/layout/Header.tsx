@@ -39,17 +39,26 @@ export function Header() {
         {/* Action Buttons */}
         <div className="flex items-center gap-1 sm:gap-2 ml-auto">
           {/* Mobile Search Button */}
-          <Button variant="ghost" size="icon" className="sm:hidden">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="sm:hidden cursor-pointer"
+          >
             <Search className="h-4 w-4" />
             <span className="sr-only">Search</span>
           </Button>
 
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" className="cursor-pointer">
             <Settings className="h-4 w-4" />
             <span className="sr-only">Settings</span>
           </Button>
 
-          <Button variant="ghost" size="icon" onClick={handleLogout}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleLogout}
+            className="cursor-pointer"
+          >
             <LogOut className="h-4 w-4" />
             <span className="sr-only">Logout</span>
           </Button>

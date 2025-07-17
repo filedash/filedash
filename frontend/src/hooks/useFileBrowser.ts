@@ -4,7 +4,7 @@ import { fileService } from '../services/fileService';
 import type { FileItem, ViewMode, SortField, SortDirection } from '../types/file';
 import { normalizePath } from '../utils/file';
 
-export function useFileBrowser(initialPath = '/') {
+export function useFileBrowser(initialPath = '/', onFileOpen?: (file: FileItem) => void) {
   const [currentPath, setCurrentPath] = useState(normalizePath(initialPath));
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
@@ -39,14 +39,14 @@ export function useFileBrowser(initialPath = '/') {
     navigateToPath(parentPath);
   }, [currentPath, navigateToPath]);
 
-  const handleFileDoubleClick = useCallback((file: FileItem) => {
+  const handleFileClick = useCallback((file: FileItem) => {
     if (file.is_directory) {
       navigateToPath(file.path);
     } else {
       // Handle file opening (download or preview)
-      console.log('Opening file:', file.path);
+      onFileOpen?.(file);
     }
-  }, [navigateToPath]);
+  }, [navigateToPath, onFileOpen]);
 
   const handleFileSelect = useCallback((path: string, selected: boolean) => {
     setSelectedFiles(prev => {
@@ -84,7 +84,7 @@ export function useFileBrowser(initialPath = '/') {
     // Actions
     navigateToPath,
     navigateUp,
-    handleFileDoubleClick,
+    handleFileClick,
     handleFileSelect,
     selectAll,
     selectNone,

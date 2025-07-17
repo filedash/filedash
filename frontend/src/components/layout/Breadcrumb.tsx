@@ -19,7 +19,7 @@ export function Breadcrumb({ path, onNavigate }: BreadcrumbProps) {
             variant="ghost"
             size="sm"
             onClick={() => onNavigate(item.path)}
-            className={`h-6 px-2 ${
+            className={`h-6 px-2 cursor-pointer ${
               index === items.length - 1
                 ? 'text-foreground font-medium'
                 : 'text-muted-foreground hover:text-foreground'

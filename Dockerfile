@@ -63,7 +63,17 @@ RUN sed -i 's|home_directory = "./files"|home_directory = "/app/files"|g' /tmp/c
     sed -i 's|frontend_dist_path = "./frontend_dist"|frontend_dist_path = "/app/frontend_dist"|g' /tmp/config.toml && \
     sed -i 's|url = "sqlite:./data/filedash.db"|url = "sqlite:/app/data/filedash.db"|g' /tmp/config.toml
 
-# Stage 4: Final Ultra-Minimal Runtime
+# Stage 4: Directory preparation
+FROM alpine:3.19 AS directory-builder
+RUN addgroup -g 65532 nonroot && adduser -D -u 65532 -G nonroot nonroot
+RUN mkdir -p /app/files /app/data /app/logs && \
+    chown -R nonroot:nonroot /app
+
+# Copy sample files to provide better out-of-box experience
+COPY backend/files/ /app/files/
+RUN chown -R nonroot:nonroot /app/files
+
+# Stage 5: Final Ultra-Minimal Runtime
 FROM gcr.io/distroless/cc-debian12:nonroot
 
 WORKDIR /app
@@ -79,6 +89,11 @@ COPY --from=frontend-builder /app/frontend/dist /app/frontend_dist
 
 # Copy production configuration
 COPY --from=config-builder /tmp/config.toml /app/config.toml
+
+# Copy pre-created directories with proper permissions
+COPY --from=directory-builder --chown=nonroot:nonroot /app/files /app/files
+COPY --from=directory-builder --chown=nonroot:nonroot /app/data /app/data
+COPY --from=directory-builder --chown=nonroot:nonroot /app/logs /app/logs
 
 # Create volume mount points
 VOLUME ["/app/files", "/app/data", "/app/logs"]
