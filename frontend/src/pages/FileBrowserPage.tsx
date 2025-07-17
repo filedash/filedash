@@ -22,18 +22,6 @@ export function FileBrowserPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const {
-    currentPath,
-    files,
-    selectedFiles,
-    isLoading,
-    error,
-    navigateToPath,
-    handleFileDoubleClick,
-    handleFileSelect,
-    refresh,
-  } = useFileBrowser();
-
   // Download handler
   const handleDownload = async (file: FileItem) => {
     try {
@@ -57,6 +45,18 @@ export function FileBrowserPage() {
       console.error('Download failed:', error);
     }
   };
+
+  const {
+    currentPath,
+    files,
+    selectedFiles,
+    isLoading,
+    error,
+    navigateToPath,
+    handleFileClick,
+    handleFileSelect,
+    refresh,
+  } = useFileBrowser('/', handleDownload);
 
   // Upload handler
   const handleUpload = async (files: FileList) => {
@@ -222,8 +222,7 @@ export function FileBrowserPage() {
         ) : viewMode === 'list' ? (
           <FileList
             files={files}
-            onFileClick={() => {}} // Just for single click selection if needed
-            onFileDoubleClick={handleFileDoubleClick}
+            onFileClick={handleFileClick}
             selectedFiles={selectedFiles}
             onFileSelect={handleFileSelect}
             onDownload={handleDownload}
@@ -231,8 +230,7 @@ export function FileBrowserPage() {
         ) : (
           <FileGrid
             files={files}
-            onFileClick={() => {}} // Just for single click selection if needed
-            onFileDoubleClick={handleFileDoubleClick}
+            onFileClick={handleFileClick}
             selectedFiles={selectedFiles}
             onFileSelect={handleFileSelect}
             onDownload={handleDownload}

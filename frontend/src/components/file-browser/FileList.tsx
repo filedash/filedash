@@ -44,7 +44,6 @@ import { formatFileSize, formatDate } from '../../utils/file';
 interface FileListProps {
   files: FileItemType[];
   onFileClick: (file: FileItemType) => void;
-  onFileDoubleClick: (file: FileItemType) => void;
   selectedFiles: string[];
   onFileSelect: (path: string, selected: boolean) => void;
   onDownload?: (file: FileItemType) => void;
@@ -53,7 +52,6 @@ interface FileListProps {
 export function FileList({
   files,
   onFileClick,
-  onFileDoubleClick,
   selectedFiles,
   onFileSelect,
   onDownload,
@@ -169,7 +167,6 @@ export function FileList({
                     <TableRow
                       className="cursor-pointer hover:bg-muted/50 transition-colors"
                       onClick={() => onFileClick(file)}
-                      onDoubleClick={() => onFileDoubleClick(file)}
                     >
                       <TableCell className="w-12">
                         <Checkbox

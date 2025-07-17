@@ -1,4 +1,5 @@
 import { Card } from '../ui/card';
+import { Checkbox } from '../ui/checkbox';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -22,7 +23,6 @@ import { formatFileSize } from '../../utils/file';
 interface FileGridProps {
   files: FileItemType[];
   onFileClick: (file: FileItemType) => void;
-  onFileDoubleClick: (file: FileItemType) => void;
   selectedFiles: string[];
   onFileSelect: (path: string, selected: boolean) => void;
   onDownload?: (file: FileItemType) => void;
@@ -31,20 +31,16 @@ interface FileGridProps {
 export function FileGrid({
   files,
   onFileClick,
-  onFileDoubleClick,
   selectedFiles,
   onFileSelect,
   onDownload,
 }: FileGridProps) {
   const handleFileClick = (file: FileItemType, e: React.MouseEvent) => {
-    if (e.detail === 2) {
-      onFileDoubleClick(file);
-    } else {
-      onFileClick(file);
-      // Toggle selection on single click
-      const isSelected = selectedFiles.includes(file.path);
-      onFileSelect(file.path, !isSelected);
-    }
+    // Prevent default to avoid triggering selection when clicking on card
+    e.preventDefault();
+
+    // Always trigger file opening on single click
+    onFileClick(file);
   };
 
   return (
@@ -63,6 +59,18 @@ export function FileGrid({
               `}
               onClick={(e) => handleFileClick(file, e)}
             >
+              {/* Selection Checkbox - Top left */}
+              <div className="absolute top-2 left-2 z-10">
+                <Checkbox
+                  checked={selectedFiles.includes(file.path)}
+                  onCheckedChange={(checked) => {
+                    onFileSelect(file.path, !!checked);
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="bg-background/80 backdrop-blur-sm"
+                />
+              </div>
+
               {/* Actions Menu - Only show on larger screens */}
               <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
                 <DropdownMenu>
