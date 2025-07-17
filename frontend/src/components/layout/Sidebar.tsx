@@ -1,6 +1,6 @@
 import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
-import { Home, Upload, Download, Trash2, Settings } from 'lucide-react';
+import { Home, Settings } from 'lucide-react';
 
 export function Sidebar() {
   return (
@@ -10,32 +10,6 @@ export function Sidebar() {
           <Home className="mr-2 h-4 w-4" />
           Home
         </Button>
-
-        <Button variant="ghost" className="w-full justify-start cursor-pointer">
-          <Upload className="mr-2 h-4 w-4" />
-          Upload
-        </Button>
-
-        <Button variant="ghost" className="w-full justify-start cursor-pointer">
-          <Download className="mr-2 h-4 w-4" />
-          Downloads
-        </Button>
-
-        <Button variant="ghost" className="w-full justify-start cursor-pointer">
-          <Trash2 className="mr-2 h-4 w-4" />
-          Trash
-        </Button>
-
-        <div className="pt-4">
-          <Separator className="mb-4" />
-          <Button
-            variant="ghost"
-            className="w-full justify-start cursor-pointer"
-          >
-            <Settings className="mr-2 h-4 w-4" />
-            Settings
-          </Button>
-        </div>
       </div>
     </aside>
   );
