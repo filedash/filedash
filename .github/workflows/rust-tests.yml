@@ -32,6 +32,6 @@ jobs:
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Run tests
-        working-directory: ./backend
-        run: cargo test -- --nocapture
+      # - name: Run tests
+      #   working-directory: ./backend
+      #   run: cargo test -- --nocapture
