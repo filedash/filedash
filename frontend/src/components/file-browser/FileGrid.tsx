@@ -67,7 +67,7 @@ export function FileGrid({
                     onFileSelect(file.path, !!checked);
                   }}
                   onClick={(e) => e.stopPropagation()}
-                  className="bg-background/80 backdrop-blur-sm"
+                  className="bg-background/80 backdrop-blur-sm cursor-pointer"
                 />
               </div>
 
@@ -91,20 +91,21 @@ export function FileGrid({
                         onDownload?.(file);
                       }}
                       disabled={file.is_directory}
+                      className="cursor-pointer"
                     >
                       <Download className="mr-2 h-4 w-4" />
                       Download
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer">
                       <Edit className="mr-2 h-4 w-4" />
                       Rename
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer">
                       <Copy className="mr-2 h-4 w-4" />
                       Copy
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem className="text-destructive">
+                    <DropdownMenuItem className="text-destructive cursor-pointer">
                       <Trash2 className="mr-2 h-4 w-4" />
                       Delete
                     </DropdownMenuItem>
@@ -142,20 +143,21 @@ export function FileGrid({
             <ContextMenuItem
               onClick={() => onDownload?.(file)}
               disabled={file.is_directory}
+              className="cursor-pointer"
             >
               <Download className="mr-2 h-4 w-4" />
               Download
             </ContextMenuItem>
-            <ContextMenuItem>
+            <ContextMenuItem className="cursor-pointer">
               <Edit className="mr-2 h-4 w-4" />
               Rename
             </ContextMenuItem>
-            <ContextMenuItem>
+            <ContextMenuItem className="cursor-pointer">
               <Copy className="mr-2 h-4 w-4" />
               Copy
             </ContextMenuItem>
             <ContextMenuSeparator />
-            <ContextMenuItem className="text-destructive">
+            <ContextMenuItem className="text-destructive cursor-pointer">
               <Trash2 className="mr-2 h-4 w-4" />
               Delete
             </ContextMenuItem>

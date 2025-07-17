@@ -15,7 +15,7 @@ export function ViewToggle({ viewMode, onViewModeChange }: ViewToggleProps) {
         variant={viewMode === 'list' ? 'default' : 'ghost'}
         size="sm"
         onClick={() => onViewModeChange('list')}
-        className="h-7 px-2"
+        className="h-7 px-2 cursor-pointer"
       >
         <List className="h-4 w-4" />
         <span className="sr-only">List view</span>
@@ -24,7 +24,7 @@ export function ViewToggle({ viewMode, onViewModeChange }: ViewToggleProps) {
         variant={viewMode === 'grid' ? 'default' : 'ghost'}
         size="sm"
         onClick={() => onViewModeChange('grid')}
-        className="h-7 px-2"
+        className="h-7 px-2 cursor-pointer"
       >
         <LayoutGrid className="h-4 w-4" />
         <span className="sr-only">Grid view</span>
