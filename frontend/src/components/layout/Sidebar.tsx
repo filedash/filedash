@@ -1,6 +1,5 @@
 import { Button } from '../ui/button';
-import { Separator } from '../ui/separator';
-import { Home, Settings } from 'lucide-react';
+import { Home } from 'lucide-react';
 
 export function Sidebar() {
   return (
