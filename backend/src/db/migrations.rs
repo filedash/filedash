@@ -68,7 +68,8 @@ async fn create_default_admin_user(pool: &SqlitePool) -> Result<(), sqlx::Error>
         use argon2::password_hash::{rand_core::OsRng, SaltString};
         use uuid::Uuid;
 
-        let password = "admin123"; // In production, this should be from environment
+        let password = std::env::var("FILEDASH_ADMIN_PASSWORD")
+            .unwrap_or_else(|_| "admin123".to_string());
         let salt = SaltString::generate(&mut OsRng);
         let argon2 = Argon2::default();
         let password_hash = argon2

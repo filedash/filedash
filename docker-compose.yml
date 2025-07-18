@@ -17,3 +17,4 @@ services:
     environment:
       - RUST_LOG=info
       - FILEDASH_AUTH__JWT_SECRET=${JWT_SECRET:-change_this_in_production}
+      - FILEDASH_ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
