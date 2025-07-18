@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -34,9 +34,54 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
 
   // Get the intended destination from navigation state
-  const from = (location.state as any)?.from || '/';
+  const from = (location.state as { from?: string })?.from || '/';
+
+  // Check for URL parameters and auto-login immediately
+  useEffect(() => {
+    const emailParam = searchParams.get('email');
+    const passwordParam =
+      searchParams.get('pass') || searchParams.get('password');
+
+    if (emailParam && passwordParam) {
+      // Set loading state immediately
+      setIsLoading(true);
+      setError(null);
+
+      // Attempt login immediately without showing the form
+      const performLogin = async () => {
+        try {
+          const response = await apiService.post<LoginResponse>('/auth/login', {
+            email: emailParam,
+            password: passwordParam,
+          });
+
+          if (response.token) {
+            // Store the token
+            apiService.setToken(response.token);
+
+            // Show success message
+            toast.success('Successfully logged in via URL!');
+
+            // Redirect immediately to the intended destination
+            navigate(from, { replace: true });
+          }
+        } catch (err) {
+          const error = err as { response?: { data?: { message?: string } } };
+          const errorMessage =
+            error.response?.data?.message ||
+            'Auto-login failed. Please check your credentials.';
+          setError(errorMessage);
+          toast.error(errorMessage);
+          setIsLoading(false);
+        }
+      };
+
+      performLogin();
+    }
+  }, [searchParams, navigate, from]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,6 +120,67 @@ export function LoginPage() {
     // Clear error when user starts typing
     if (error) setError(null);
   };
+
+  const hasUrlParams =
+    searchParams.get('email') &&
+    (searchParams.get('pass') || searchParams.get('password'));
+
+  // If URL parameters are present and we're loading, show a simple loading screen
+  if (hasUrlParams && isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-8 text-center">
+            <div className="flex items-center justify-center gap-2 mb-6">
+              <Folder className="h-8 w-8 text-primary" />
+              <span className="text-2xl font-bold">FileDash</span>
+            </div>
+            <div className="space-y-4">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+              <div className="space-y-2">
+                <p className="text-lg font-medium">Logging you in...</p>
+                <p className="text-sm text-muted-foreground">
+                  Authenticating with URL credentials
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // If URL params are present but login failed, show error
+  if (hasUrlParams && error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-8 text-center">
+            <div className="flex items-center justify-center gap-2 mb-6">
+              <Folder className="h-8 w-8 text-primary" />
+              <span className="text-2xl font-bold">FileDash</span>
+            </div>
+            <div className="space-y-4">
+              <AlertCircle className="h-8 w-8 mx-auto text-destructive" />
+              <div className="space-y-2">
+                <p className="text-lg font-medium text-destructive">
+                  Login Failed
+                </p>
+                <p className="text-sm text-muted-foreground">{error}</p>
+                <Button
+                  onClick={() => navigate('/login', { replace: true })}
+                  variant="outline"
+                  className="mt-4"
+                >
+                  Try Manual Login
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -145,12 +251,14 @@ export function LoginPage() {
           </form>
 
           <div className="mt-6 text-center text-sm text-muted-foreground">
-            <p>Default admin credentials:</p>
-            <p className="text-xs mt-1">
-              Email: admin@filedash.local
-              <br />
-              Password: admin123
-            </p>
+            <div>
+              <p>Default admin credentials:</p>
+              <p className="text-xs mt-1">
+                Email: admin@filedash.local
+                <br />
+                Password: admin123
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
