@@ -14,7 +14,7 @@ export function Header() {
       logout();
       toast.success('Successfully logged out');
       navigate('/login');
-    } catch (error) {
+    } catch {
       toast.error('Logout failed');
     }
   };
@@ -23,7 +23,7 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 max-w-screen-2xl items-center px-4 sm:px-6">
         {/* Logo and Title */}
-        <div className="flex items-center gap-2 lg:ml-12">
+        <div className="flex items-center gap-2">
           <Folder className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
           <span className="font-semibold text-base sm:text-lg">FileDash</span>
         </div>

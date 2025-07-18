@@ -7,7 +7,7 @@ A modern React-based file browser frontend for FileDash.
 ✅ **Foundation & Core UI**
 
 - Modern React 19 + TypeScript + Tailwind CSS setup
-- Responsive layout with header and sidebar navigation
+- Responsive layout with header navigation
 - Reusable UI component library (shadcn/ui based)
 - API service layer with Axios and React Query
 - File type detection and icon mapping
