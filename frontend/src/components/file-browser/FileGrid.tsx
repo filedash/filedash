@@ -18,7 +18,6 @@ import { Button } from '../ui/button';
 import { MoreVertical, Download, Edit, Trash2, Copy } from 'lucide-react';
 import { FileGridIcon } from './FileGridIcon';
 import type { FileItem as FileItemType } from '../../types/file';
-import { formatFileSize } from '../../utils/file';
 
 interface FileGridProps {
   files: FileItemType[];
@@ -121,17 +120,12 @@ export function FileGrid({
                 </div>
 
                 {/* File Name */}
-                <div className="w-full space-y-1">
+                <div className="w-full">
                   <p
                     className="text-sm font-medium truncate px-1 leading-tight"
                     title={file.name}
                   >
                     {file.name}
-                  </p>
-
-                  {/* File Size */}
-                  <p className="text-xs text-muted-foreground">
-                    {file.is_directory ? 'Folder' : formatFileSize(file.size)}
                   </p>
                 </div>
               </div>
