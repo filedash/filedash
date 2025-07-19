@@ -4,6 +4,7 @@ import { Input } from '../ui/input';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { ThemeToggle } from '../theme-toggle';
 
 export function Header() {
   const { logout } = useAuth();
@@ -47,6 +48,8 @@ export function Header() {
             <Search className="h-4 w-4" />
             <span className="sr-only">Search</span>
           </Button>
+
+          <ThemeToggle />
 
           <Button variant="ghost" size="icon" className="cursor-pointer">
             <Settings className="h-4 w-4" />

@@ -4,6 +4,7 @@ import { AppLayout } from './components/layout/AppLayout';
 import { FileBrowserPage } from './pages/FileBrowserPage';
 import { LoginPage } from './pages/LoginPage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { ThemeProvider } from './contexts/theme-provider';
 import { Toaster } from './components/ui/sonner';
 import './App.css';
 
@@ -19,30 +20,32 @@ const queryClient = new QueryClient({
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <Routes>
-          {/* Login page without layout */}
-          <Route path="/login" element={<LoginPage />} />
+    <ThemeProvider defaultTheme="system" storageKey="filedash-ui-theme">
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <Routes>
+            {/* Login page without layout */}
+            <Route path="/login" element={<LoginPage />} />
 
-          {/* Main app with layout - protected */}
-          <Route
-            path="/*"
-            element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <Routes>
-                    <Route path="/" element={<FileBrowserPage />} />
-                    <Route path="/browse/*" element={<FileBrowserPage />} />
-                  </Routes>
-                </AppLayout>
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-        <Toaster />
-      </BrowserRouter>
-    </QueryClientProvider>
+            {/* Main app with layout - protected */}
+            <Route
+              path="/*"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Routes>
+                      <Route path="/" element={<FileBrowserPage />} />
+                      <Route path="/browse/*" element={<FileBrowserPage />} />
+                    </Routes>
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+          <Toaster />
+        </BrowserRouter>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 
