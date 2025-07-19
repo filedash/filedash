@@ -227,6 +227,19 @@ export function FileBrowserPage() {
         />
       </div>
 
+      {/* Selection Actions Bar - Show at top when files are selected */}
+      {selectedFiles.length > 0 && (
+        <div className="px-2">
+          <FileBrowserSelectionBar
+            selectedCount={selectedFiles.length}
+            onSelectAll={selectAll}
+            onSelectNone={selectNone}
+            onDownload={handleBulkDownload}
+            onDelete={handleBulkDelete}
+          />
+        </div>
+      )}
+
       {/* Main File Browser - Full Width with minimal padding */}
       <Card className="border-border/40 shadow-sm overflow-hidden rounded-lg">
         {/* Compact Toolbar Header */}
@@ -269,19 +282,6 @@ export function FileBrowserPage() {
           )}
         </div>
       </Card>
-
-      {/* Selection Actions Bar */}
-      {selectedFiles.length > 0 && (
-        <div className="px-2">
-          <FileBrowserSelectionBar
-            selectedCount={selectedFiles.length}
-            onSelectAll={selectAll}
-            onSelectNone={selectNone}
-            onDownload={handleBulkDownload}
-            onDelete={handleBulkDelete}
-          />
-        </div>
-      )}
 
       {/* Hidden file input for uploads */}
       <input
