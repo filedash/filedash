@@ -42,9 +42,19 @@ class ApiService {
       (response) => response,
       (error) => {
         if (error.response?.status === 401) {
-          // Handle unauthorized - clear token and redirect to login
-          this.clearToken();
-          window.location.href = '/login';
+          // Only redirect if we're not already on the login page
+          // and if this isn't a login attempt
+          const currentPath = window.location.pathname;
+          const isLoginEndpoint = error.config?.url?.includes('/auth/login');
+
+          if (!isLoginEndpoint && currentPath !== '/login') {
+            // Handle unauthorized - clear token and redirect to login
+            this.clearToken();
+            window.location.href = '/login';
+          } else if (isLoginEndpoint) {
+            // For login attempts, just clear any existing token but don't redirect
+            this.clearToken();
+          }
         }
         return Promise.reject(error);
       }

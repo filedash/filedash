@@ -1,7 +1,7 @@
 import { apiService } from './api';
 import type { FileListResponse, UploadResponse } from '../types/file';
 
-class FileService {
+export class FileService {
   async listFiles(path?: string, page = 1, limit = 100): Promise<FileListResponse> {
     const params = new URLSearchParams();
     if (path) params.append('path', path);
@@ -44,6 +44,11 @@ class FileService {
 
   async createDirectory(path: string, recursive = true): Promise<{ message: string; path: string }> {
     return apiService.post('/files/mkdir', { path, recursive });
+  }
+
+  async createFolder(parentPath: string, folderName: string): Promise<{ message: string; path: string }> {
+    const fullPath = parentPath === '/' ? `/${folderName}` : `${parentPath}/${folderName}`;
+    return this.createDirectory(fullPath, true);
   }
 }
 
