@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { useFileBrowser } from '../hooks/useFileBrowser';
 import { FileList } from '../components/file-browser/FileList';
 import { FileGrid } from '../components/file-browser/FileGrid';
+import { CreateFolderDialog } from '../components/file-browser/CreateFolderDialog';
 import {
   ViewToggle,
   type ViewMode,
@@ -20,6 +21,8 @@ import { toast } from 'sonner';
 
 export function FileBrowserPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [createFolderDialogOpen, setCreateFolderDialogOpen] = useState(false);
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Download handler
@@ -101,6 +104,35 @@ export function FileBrowserPage() {
     fileInputRef.current?.click();
   };
 
+  // Handle folder creation
+  const handleCreateFolder = async (folderName: string) => {
+    try {
+      setIsCreatingFolder(true);
+
+      // Construct the full path for the new folder
+      const folderPath =
+        currentPath === '/' ? `/${folderName}` : `${currentPath}/${folderName}`;
+
+      await toast.promise(fileService.createDirectory(folderPath), {
+        loading: `Creating folder "${folderName}"...`,
+        success: (result) => {
+          console.log('Folder created:', result);
+          setCreateFolderDialogOpen(false);
+          refresh();
+          return `Successfully created folder "${folderName}"`;
+        },
+        error: (error) => {
+          console.error('Create folder error:', error);
+          return `Failed to create folder: ${error.message || 'Unknown error'}`;
+        },
+      });
+    } catch (error) {
+      console.error('Create folder failed:', error);
+    } finally {
+      setIsCreatingFolder(false);
+    }
+  };
+
   if (error) {
     return (
       <ErrorDisplay
@@ -138,7 +170,12 @@ export function FileBrowserPage() {
           <div className="hidden sm:flex items-center gap-3">
             <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
             <Separator orientation="vertical" className="h-6" />
-            <Button variant="outline" size="sm" className="cursor-pointer">
+            <Button
+              variant="outline"
+              size="sm"
+              className="cursor-pointer"
+              onClick={() => setCreateFolderDialogOpen(true)}
+            >
               <FolderPlus className="mr-2 h-4 w-4" />
               New Folder
             </Button>
@@ -170,7 +207,12 @@ export function FileBrowserPage() {
         <div className="flex sm:hidden items-center justify-between gap-2">
           <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="cursor-pointer">
+            <Button
+              variant="outline"
+              size="sm"
+              className="cursor-pointer"
+              onClick={() => setCreateFolderDialogOpen(true)}
+            >
               <FolderPlus className="h-4 w-4" />
               <span className="sr-only">New Folder</span>
             </Button>
@@ -230,7 +272,12 @@ export function FileBrowserPage() {
                 <Upload className="mr-2 h-4 w-4" />
                 Upload Files
               </Button>
-              <Button variant="outline" size="sm" className="cursor-pointer">
+              <Button
+                variant="outline"
+                size="sm"
+                className="cursor-pointer"
+                onClick={() => setCreateFolderDialogOpen(true)}
+              >
                 <FolderPlus className="mr-2 h-4 w-4" />
                 New Folder
               </Button>
@@ -286,6 +333,15 @@ export function FileBrowserPage() {
             e.target.value = '';
           }
         }}
+      />
+
+      {/* Create Folder Dialog */}
+      <CreateFolderDialog
+        open={createFolderDialogOpen}
+        onOpenChange={setCreateFolderDialogOpen}
+        onCreateFolder={handleCreateFolder}
+        currentPath={currentPath}
+        isCreating={isCreatingFolder}
       />
     </div>
   );

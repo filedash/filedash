@@ -181,6 +181,34 @@ impl FileService {
         Ok(())
     }
 
+    /// Create a directory
+    pub async fn create_directory(&self, path: &str, recursive: bool) -> Result<FileInfo, ApiError> {
+        let resolved_path = resolve_path(&self.config.storage.home_directory, path)?;
+        
+        // Check if directory already exists
+        if resolved_path.exists() {
+            if resolved_path.is_dir() {
+                return Err(ApiError::BadRequest {
+                    message: "Directory already exists".to_string(),
+                });
+            } else {
+                return Err(ApiError::BadRequest {
+                    message: "A file with this name already exists".to_string(),
+                });
+            }
+        }
+
+        // Create directory
+        if recursive {
+            async_fs::create_dir_all(&resolved_path).await?;
+        } else {
+            async_fs::create_dir(&resolved_path).await?;
+        }
+
+        // Return file info for the created directory
+        self.get_file_info(&resolved_path, path)
+    }
+
     /// Get file information
     fn get_file_info(&self, file_path: &Path, relative_path: &str) -> Result<FileInfo, ApiError> {
         let metadata = fs::metadata(file_path)?;

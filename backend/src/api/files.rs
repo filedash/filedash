@@ -17,6 +17,7 @@ pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/", get(list_files))
         .route("/upload", post(upload_files))
+        .route("/mkdir", post(create_directory))
         .route("/download/*path", get(download_file))
         .route("/*path", delete(delete_file))
 }
@@ -43,6 +44,36 @@ async fn list_files(
     let files = file_service.list_files(&path).await?;
     
     Ok(Json(ListResponse { files, path }))
+}
+
+#[derive(Deserialize)]
+struct CreateDirectoryRequest {
+    path: String,
+    recursive: Option<bool>,
+}
+
+#[derive(Serialize)]
+struct CreateDirectoryResponse {
+    message: String,
+    path: String,
+    file_info: FileInfo,
+}
+
+async fn create_directory(
+    State(app_state): State<AppState>,
+    Extension(_auth_context): Extension<AuthContext>,
+    Json(request): Json<CreateDirectoryRequest>,
+) -> Result<Json<CreateDirectoryResponse>, ApiError> {
+    let file_service = FileService::new(app_state.config.as_ref().clone());
+    let recursive = request.recursive.unwrap_or(true);
+    
+    let file_info = file_service.create_directory(&request.path, recursive).await?;
+    
+    Ok(Json(CreateDirectoryResponse {
+        message: "Directory created successfully".to_string(),
+        path: request.path,
+        file_info,
+    }))
 }
 
 #[derive(Serialize)]
