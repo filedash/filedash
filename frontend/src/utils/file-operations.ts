@@ -31,10 +31,20 @@ export function formatFileSize(bytes: number): string {
 }
 
 /**
- * Format date in human readable format
+ * Format date for display
  */
 export function formatDate(dateString: string): string {
+  if (!dateString) {
+    return 'Unknown';
+  }
+
   const date = new Date(dateString);
+
+  // Check if date is invalid
+  if (isNaN(date.getTime())) {
+    return 'Invalid date';
+  }
+
   const now = new Date();
   const diff = now.getTime() - date.getTime();
 
