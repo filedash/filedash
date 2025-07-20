@@ -1,5 +1,5 @@
 import { Button } from '../ui/button';
-import { Folder, Search, Settings, LogOut } from 'lucide-react';
+import { Folder, Search, LogOut } from 'lucide-react';
 import { Input } from '../ui/input';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
@@ -66,16 +66,6 @@ export function Header() {
 
             {/* Theme Toggle */}
             <ThemeToggle />
-
-            {/* Settings */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="hidden sm:flex h-8 w-8 p-0"
-            >
-              <Settings className="h-3.5 w-3.5" />
-              <span className="sr-only">Settings</span>
-            </Button>
 
             {/* Logout */}
             <Button
