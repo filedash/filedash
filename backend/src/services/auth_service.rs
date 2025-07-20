@@ -129,7 +129,7 @@ impl AuthService {
                 let date_str: String = user_row.get("created_at");
                 // Try to parse as SQLite datetime format first
                 if let Ok(naive_dt) = chrono::NaiveDateTime::parse_from_str(&date_str, "%Y-%m-%d %H:%M:%S") {
-                    DateTime::<Utc>::from_utc(naive_dt, Utc)
+                    DateTime::<Utc>::from_naive_utc_and_offset(naive_dt, Utc)
                 } else {
                     // Fallback to RFC3339 parsing
                     chrono::DateTime::parse_from_rfc3339(&date_str)
@@ -143,7 +143,7 @@ impl AuthService {
                 let date_str: String = user_row.get("updated_at");
                 // Try to parse as SQLite datetime format first
                 if let Ok(naive_dt) = chrono::NaiveDateTime::parse_from_str(&date_str, "%Y-%m-%d %H:%M:%S") {
-                    DateTime::<Utc>::from_utc(naive_dt, Utc)
+                    DateTime::<Utc>::from_naive_utc_and_offset(naive_dt, Utc)
                 } else {
                     // Fallback to RFC3339 parsing
                     chrono::DateTime::parse_from_rfc3339(&date_str)
@@ -269,7 +269,7 @@ impl AuthService {
             let expires_at = if let Ok(dt) = chrono::DateTime::parse_from_rfc3339(&expires_at_str) {
                 dt.with_timezone(&Utc)
             } else if let Ok(naive_dt) = chrono::NaiveDateTime::parse_from_str(&expires_at_str, "%Y-%m-%d %H:%M:%S") {
-                DateTime::<Utc>::from_utc(naive_dt, Utc)
+                DateTime::<Utc>::from_naive_utc_and_offset(naive_dt, Utc)
             } else {
                 return Err(ApiError::InternalServerError {
                     message: "Invalid session expiration format".to_string()
@@ -320,7 +320,7 @@ impl AuthService {
                 let date_str: String = user_row.get("created_at");
                 // Try to parse as SQLite datetime format first
                 if let Ok(naive_dt) = chrono::NaiveDateTime::parse_from_str(&date_str, "%Y-%m-%d %H:%M:%S") {
-                    DateTime::<Utc>::from_utc(naive_dt, Utc)
+                    DateTime::<Utc>::from_naive_utc_and_offset(naive_dt, Utc)
                 } else {
                     // Fallback to RFC3339 parsing
                     chrono::DateTime::parse_from_rfc3339(&date_str)
