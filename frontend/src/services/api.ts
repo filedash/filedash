@@ -22,6 +22,10 @@ class ApiService {
       },
     });
 
+    // Load token from localStorage on initialization
+    // For mock API, we still want to load from localStorage to maintain consistency
+    this.token = localStorage.getItem('auth_token');
+
     this.setupInterceptors();
   }
 
@@ -78,9 +82,12 @@ class ApiService {
   }
 
   getToken(): string | null {
-    if (!this.token) {
-      this.token = localStorage.getItem('auth_token');
+    // Always check localStorage first to ensure we have the latest token
+    const storedToken = localStorage.getItem('auth_token');
+    if (storedToken !== this.token) {
+      this.token = storedToken;
     }
+
     if (USE_MOCK_API) {
       return mockApiService.getToken();
     }
