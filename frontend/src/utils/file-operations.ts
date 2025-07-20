@@ -1,5 +1,6 @@
 import type { FileItem } from '../types/file';
 import type { FileService } from '../services/fileService';
+import { formatDistanceToNow, format, isToday, isYesterday, parseISO, isValid } from 'date-fns';
 
 /**
  * Download file utility function
@@ -31,7 +32,8 @@ export function formatFileSize(bytes: number): string {
 }
 
 /**
- * Format date for display with robust parsing
+ * Format date for display with human-readable relative time
+ * Examples: "2 minutes ago", "yesterday 7:30 PM", "Dec 15, 2023"
  */
 export function formatDate(dateString: string): string {
   if (!dateString) {
@@ -39,19 +41,19 @@ export function formatDate(dateString: string): string {
   }
 
   let date: Date;
-
+  
   // Try to parse as ISO string first, then fallback to general parsing
   try {
-    // Check if it's an ISO 8601 format or similar standard format
-    if (dateString.includes('T') || dateString.includes('Z') || /^\d{4}-\d{2}-\d{2}/.test(dateString)) {
+    // Use date-fns parseISO for better ISO string handling
+    date = parseISO(dateString);
+    
+    // If parseISO didn't work, try the regular Date constructor
+    if (!isValid(date)) {
       date = new Date(dateString);
-    } else {
-      // For other formats, be more explicit
-      date = new Date(Date.parse(dateString));
     }
-
-    // Additional validation to ensure we have a valid date
-    if (isNaN(date.getTime()) || date.getTime() === 0) {
+    
+    // Final validation
+    if (!isValid(date)) {
       return 'Invalid date';
     }
   } catch {
@@ -59,23 +61,37 @@ export function formatDate(dateString: string): string {
   }
 
   const now = new Date();
-  const diff = now.getTime() - date.getTime();
+  const diffInMs = now.getTime() - date.getTime();
+  const diffInHours = diffInMs / (1000 * 60 * 60);
 
-  // Less than 1 day ago
-  if (diff < 24 * 60 * 60 * 1000 && diff >= 0) {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  // Less than 1 hour ago - show relative time (e.g., "5 minutes ago")
+  if (diffInHours < 1 && diffInMs >= 0) {
+    return formatDistanceToNow(date, { addSuffix: true });
   }
 
-  // Less than 1 year ago
-  if (diff < 365 * 24 * 60 * 60 * 1000 && diff >= 0) {
-    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  // Today - show just time (e.g., "2:30 PM")
+  if (isToday(date)) {
+    return format(date, 'h:mm a');
   }
 
-  // More than 1 year ago or future dates
-  return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
-}
+  // Yesterday - show "yesterday" with time (e.g., "Yesterday 7:30 PM")
+  if (isYesterday(date)) {
+    return `Yesterday ${format(date, 'h:mm a')}`;
+  }
 
-/**
+  // Less than 7 days ago - show day of week with time (e.g., "Monday 3:45 PM")
+  if (diffInHours < 7 * 24 && diffInMs >= 0) {
+    return format(date, 'EEEE h:mm a');
+  }
+
+  // Same year - show month and day with time (e.g., "Dec 15, 3:45 PM")
+  if (date.getFullYear() === now.getFullYear()) {
+    return format(date, 'MMM d, h:mm a');
+  }
+
+  // Different year - show full date with time (e.g., "Dec 15, 2023, 3:45 PM")
+  return format(date, 'MMM d, yyyy, h:mm a');
+}/**
  * Reserved Windows file names that should not be used
  */
 const RESERVED_NAMES = ['CON', 'PRN', 'AUX', 'NUL', 'COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7', 'COM8', 'COM9', 'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9'];
