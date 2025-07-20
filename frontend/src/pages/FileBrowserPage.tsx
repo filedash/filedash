@@ -8,7 +8,7 @@ import { useFileBrowser } from '../hooks/useFileBrowser';
 import { FileListView } from '../components/file-browser/FileListView';
 import { FileGridView } from '../components/file-browser/FileGridView';
 import { FileBrowserToolbar } from '../components/file-browser/FileBrowserToolbar';
-import { FileBrowserBreadcrumb } from '../components/file-browser/FileBrowserBreadcrumb';
+import { FileDashBreadcrumb } from '../components/layout/Breadcrumb';
 import { FileBrowserEmptyState } from '../components/file-browser/FileBrowserEmptyState';
 import { FileBrowserSelectionBar } from '../components/file-browser/FileBrowserSelectionBar';
 import { CreateFolderDialog } from '../components/file-browser/CreateFolderDialog';
@@ -259,9 +259,10 @@ export function FileBrowserPage() {
     <div className="space-y-1">
       {/* Breadcrumb Navigation - Minimal padding */}
       <div className="px-2 py-1">
-        <FileBrowserBreadcrumb
-          currentPath={currentPath}
+        <FileDashBreadcrumb
+          path={currentPath}
           onNavigate={navigateToPath}
+          availableSpace="large"
         />
       </div>
 
