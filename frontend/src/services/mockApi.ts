@@ -148,9 +148,14 @@ class MockApiService {
   private imagesData: FileItem[] = [...imagesFiles];
 
   constructor() {
-    // Initialize with mock token for demo
-    this.token = MOCK_TOKEN;
-    localStorage.setItem('auth_token', MOCK_TOKEN);
+    // Only initialize with mock token if no token exists in localStorage
+    const existingToken = localStorage.getItem('auth_token');
+    if (!existingToken) {
+      this.token = MOCK_TOKEN;
+      localStorage.setItem('auth_token', MOCK_TOKEN);
+    } else {
+      this.token = existingToken;
+    }
   }
 
   setToken(token: string) {

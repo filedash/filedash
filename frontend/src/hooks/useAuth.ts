@@ -19,10 +19,18 @@ export function useAuth() {
         // Try to get current user to verify token is valid
         await apiService.get('/auth/me');
         setIsAuthenticated(true);
-      } catch (error) {
-        // Token is invalid, clear it
-        apiService.clearToken();
-        setIsAuthenticated(false);
+      } catch (error: unknown) {
+        // Only clear token if it's an authentication error (401)
+        // Don't clear on network errors or other issues
+        const axiosError = error as { response?: { status?: number } };
+        if (axiosError?.response?.status === 401) {
+          apiService.clearToken();
+          setIsAuthenticated(false);
+        } else {
+          // For other errors, assume token is still valid but there's a temporary issue
+          console.warn('Auth check failed with non-401 error:', error);
+          setIsAuthenticated(true); // Assume still authenticated
+        }
       } finally {
         setIsLoading(false);
       }
