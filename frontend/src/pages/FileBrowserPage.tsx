@@ -12,6 +12,7 @@ import { FileBrowserBreadcrumb } from '../components/file-browser/FileBrowserBre
 import { FileBrowserEmptyState } from '../components/file-browser/FileBrowserEmptyState';
 import { FileBrowserSelectionBar } from '../components/file-browser/FileBrowserSelectionBar';
 import { CreateFolderDialog } from '../components/file-browser/CreateFolderDialog';
+import { RenameDialog } from '../components/file-browser/RenameDialog';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { ErrorDisplay } from '../components/common/ErrorDisplay';
 
@@ -42,6 +43,9 @@ export function FileBrowserPage() {
   // Local state for UI controls
   const [createFolderDialogOpen, setCreateFolderDialogOpen] = useState(false);
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [fileToRename, setFileToRename] = useState<FileItem | null>(null);
+  const [isRenaming, setIsRenaming] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   /**
@@ -155,6 +159,40 @@ export function FileBrowserPage() {
       }
     },
     [currentPath, refresh]
+  );
+
+  /**
+   * File rename handler
+   */
+  const handleRename = useCallback((file: FileItem) => {
+    setFileToRename(file);
+    setRenameDialogOpen(true);
+  }, []);
+
+  const handleRenameConfirm = useCallback(
+    async (from: string, to: string, newName: string) => {
+      setIsRenaming(true);
+      try {
+        await toast.promise(fileService.renameFile(from, to), {
+          loading: `Renaming to "${newName}"...`,
+          success: (result) => {
+            console.log('File renamed:', result);
+            refresh();
+            return `Successfully renamed to "${newName}"`;
+          },
+          error: (error) => {
+            console.error('Rename error:', error);
+            return `Failed to rename: ${error.message || 'Unknown error'}`;
+          },
+        });
+      } catch (error) {
+        console.error('Rename failed:', error);
+        throw error; // Re-throw so the dialog can handle it
+      } finally {
+        setIsRenaming(false);
+      }
+    },
+    [refresh]
   );
 
   /**
@@ -277,6 +315,7 @@ export function FileBrowserPage() {
               onFileClick={handleFileClick}
               onFileSelect={handleFileSelect}
               onDownload={handleDownload}
+              onRename={handleRename}
               onSort={handleSort}
             />
           )}
@@ -305,6 +344,15 @@ export function FileBrowserPage() {
         currentPath={currentPath}
         isCreating={isCreatingFolder}
       />
+
+      {/* Rename Dialog */}
+      <RenameDialog
+        open={renameDialogOpen}
+        onOpenChange={setRenameDialogOpen}
+        file={fileToRename}
+        onRename={handleRenameConfirm}
+        isRenaming={isRenaming}
+      />
     </div>
   );
 }
@@ -322,6 +370,7 @@ interface FileBrowserContentProps {
   onFileClick: (file: FileItem) => void;
   onFileSelect: (path: string, selected: boolean) => void;
   onDownload: (file: FileItem) => void;
+  onRename: (file: FileItem) => void;
   onSort: (field: string) => void;
 }
 
@@ -334,6 +383,7 @@ function FileBrowserContent({
   onFileClick,
   onFileSelect,
   onDownload,
+  onRename,
   onSort,
 }: FileBrowserContentProps) {
   if (viewMode === 'list') {
@@ -346,6 +396,7 @@ function FileBrowserContent({
         onFileClick={onFileClick}
         onFileSelect={onFileSelect}
         onDownload={onDownload}
+        onRename={onRename}
         onSort={onSort}
       />
     );
@@ -358,6 +409,7 @@ function FileBrowserContent({
       onFileClick={onFileClick}
       onFileSelect={onFileSelect}
       onDownload={onDownload}
+      onRename={onRename}
     />
   );
 }
