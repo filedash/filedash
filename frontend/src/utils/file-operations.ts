@@ -31,17 +31,30 @@ export function formatFileSize(bytes: number): string {
 }
 
 /**
- * Format date for display
+ * Format date for display with robust parsing
  */
 export function formatDate(dateString: string): string {
   if (!dateString) {
     return 'Unknown';
   }
 
-  const date = new Date(dateString);
+  let date: Date;
 
-  // Check if date is invalid
-  if (isNaN(date.getTime())) {
+  // Try to parse as ISO string first, then fallback to general parsing
+  try {
+    // Check if it's an ISO 8601 format or similar standard format
+    if (dateString.includes('T') || dateString.includes('Z') || /^\d{4}-\d{2}-\d{2}/.test(dateString)) {
+      date = new Date(dateString);
+    } else {
+      // For other formats, be more explicit
+      date = new Date(Date.parse(dateString));
+    }
+
+    // Additional validation to ensure we have a valid date
+    if (isNaN(date.getTime()) || date.getTime() === 0) {
+      return 'Invalid date';
+    }
+  } catch {
     return 'Invalid date';
   }
 
@@ -49,18 +62,23 @@ export function formatDate(dateString: string): string {
   const diff = now.getTime() - date.getTime();
 
   // Less than 1 day ago
-  if (diff < 24 * 60 * 60 * 1000) {
+  if (diff < 24 * 60 * 60 * 1000 && diff >= 0) {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
   // Less than 1 year ago
-  if (diff < 365 * 24 * 60 * 60 * 1000) {
+  if (diff < 365 * 24 * 60 * 60 * 1000 && diff >= 0) {
     return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
   }
 
-  // More than 1 year ago
+  // More than 1 year ago or future dates
   return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
 }
+
+/**
+ * Reserved Windows file names that should not be used
+ */
+const RESERVED_NAMES = ['CON', 'PRN', 'AUX', 'NUL', 'COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7', 'COM8', 'COM9', 'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9'];
 
 /**
  * Validate file name
@@ -79,8 +97,7 @@ export function validateFileName(name: string): { isValid: boolean; error?: stri
     return { isValid: false, error: 'File name contains invalid characters' };
   }
 
-  const reservedNames = ['CON', 'PRN', 'AUX', 'NUL', 'COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7', 'COM8', 'COM9', 'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9'];
-  if (reservedNames.includes(name.toUpperCase())) {
+  if (RESERVED_NAMES.includes(name.toUpperCase())) {
     return { isValid: false, error: 'File name is reserved' };
   }
 
