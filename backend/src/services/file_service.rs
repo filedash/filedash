@@ -182,6 +182,37 @@ impl FileService {
         Ok(())
     }
 
+    /// Rename/move a file or directory
+    pub async fn rename_file(&self, from_path: &str, to_path: &str) -> Result<FileInfo, ApiError> {
+        let resolved_from_path = resolve_path(&self.config.storage.home_directory, from_path)?;
+        let resolved_to_path = resolve_path(&self.config.storage.home_directory, to_path)?;
+        
+        // Check if source file exists
+        if !resolved_from_path.exists() {
+            return Err(ApiError::FileNotFound {
+                path: from_path.to_string(),
+            });
+        }
+
+        // Check if destination already exists
+        if resolved_to_path.exists() {
+            return Err(ApiError::FileExists {
+                path: to_path.to_string(),
+            });
+        }
+
+        // Create parent directory if it doesn't exist
+        if let Some(parent) = resolved_to_path.parent() {
+            async_fs::create_dir_all(parent).await?;
+        }
+
+        // Rename/move the file
+        async_fs::rename(&resolved_from_path, &resolved_to_path).await?;
+
+        // Return file info for the renamed file
+        self.get_file_info(&resolved_to_path, to_path)
+    }
+
     /// Create a directory
     pub async fn create_directory(&self, path: &str, recursive: bool) -> Result<FileInfo, ApiError> {
         let resolved_path = resolve_path(&self.config.storage.home_directory, path)?;

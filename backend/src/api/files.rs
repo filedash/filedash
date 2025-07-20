@@ -8,7 +8,7 @@ use axum::{
     extract::{Extension, Multipart, Path, Query, State},
     http::{header, StatusCode},
     response::{IntoResponse, Response},
-    routing::{delete, get, post},
+    routing::{delete, get, post, put},
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
@@ -18,6 +18,7 @@ pub fn routes() -> Router<AppState> {
         .route("/", get(list_files))
         .route("/upload", post(upload_files))
         .route("/mkdir", post(create_directory))
+        .route("/rename", put(rename_file))
         .route("/download/*path", get(download_file))
         .route("/*path", delete(delete_file))
 }
@@ -181,6 +182,20 @@ struct DeleteResponse {
     path: String,
 }
 
+#[derive(Deserialize)]
+struct RenameRequest {
+    from: String,
+    to: String,
+}
+
+#[derive(Serialize)]
+struct RenameResponse {
+    message: String,
+    from: String,
+    to: String,
+    file_info: FileInfo,
+}
+
 async fn delete_file(
     State(app_state): State<AppState>,
     Extension(_auth_context): Extension<AuthContext>,
@@ -192,5 +207,21 @@ async fn delete_file(
     Ok(Json(DeleteResponse {
         message: "File deleted successfully".to_string(),
         path,
+    }))
+}
+
+async fn rename_file(
+    State(app_state): State<AppState>,
+    Extension(_auth_context): Extension<AuthContext>,
+    Json(request): Json<RenameRequest>,
+) -> Result<Json<RenameResponse>, ApiError> {
+    let file_service = FileService::new(app_state.config.as_ref().clone());
+    let file_info = file_service.rename_file(&request.from, &request.to).await?;
+    
+    Ok(Json(RenameResponse {
+        message: "File renamed successfully".to_string(),
+        from: request.from,
+        to: request.to,
+        file_info,
     }))
 }

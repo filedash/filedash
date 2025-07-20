@@ -48,6 +48,7 @@ interface FileListViewProps {
   onFileClick: (file: FileItemType) => void;
   onFileSelect: (path: string, selected: boolean) => void;
   onDownload: (file: FileItemType) => void;
+  onRename: (file: FileItemType) => void;
   onSort: (field: string) => void;
 }
 
@@ -63,6 +64,7 @@ export function FileListView({
   onFileClick,
   onFileSelect,
   onDownload,
+  onRename,
   onSort,
 }: FileListViewProps) {
   const sortedFiles = sortFiles(files, sortField, sortDirection);
@@ -189,7 +191,13 @@ export function FileListView({
                               <Download className="mr-2 h-4 w-4" />
                               Download
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer">
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onRename(file);
+                              }}
+                              className="cursor-pointer"
+                            >
                               <Edit className="mr-2 h-4 w-4" />
                               Rename
                             </DropdownMenuItem>
@@ -216,7 +224,10 @@ export function FileListView({
                       <Download className="mr-2 h-4 w-4" />
                       Download
                     </ContextMenuItem>
-                    <ContextMenuItem className="cursor-pointer">
+                    <ContextMenuItem
+                      onClick={() => onRename(file)}
+                      className="cursor-pointer"
+                    >
                       <Edit className="mr-2 h-4 w-4" />
                       Rename
                     </ContextMenuItem>
