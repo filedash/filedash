@@ -1,34 +1,75 @@
-import { ChevronRight, Home } from 'lucide-react';
-import { Button } from '../ui/button';
+import * as React from 'react';
+import { Home } from 'lucide-react';
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+  BreadcrumbEllipsis,
+} from '../ui/breadcrumb';
 import { getBreadcrumbItems } from '../../utils/file';
+import { truncateBreadcrumbItems } from '../../utils/pathTruncation';
 
 interface BreadcrumbProps {
   path: string;
   onNavigate: (path: string) => void;
+  availableSpace?: 'small' | 'medium' | 'large';
 }
 
-export function Breadcrumb({ path, onNavigate }: BreadcrumbProps) {
+export function FileDashBreadcrumb({
+  path,
+  onNavigate,
+  availableSpace = 'medium',
+}: BreadcrumbProps) {
   const items = getBreadcrumbItems(path);
+  const truncatedItems = truncateBreadcrumbItems(items, { availableSpace });
 
   return (
-    <nav className="flex items-center space-x-1 text-sm text-muted-foreground">
-      {items.map((item, index) => (
-        <div key={item.path} className="flex items-center">
-          {index > 0 && <ChevronRight className="mx-1 h-4 w-4" />}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onNavigate(item.path)}
-            className={`h-6 px-2 cursor-pointer ${
-              index === items.length - 1
-                ? 'text-foreground font-medium'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {index === 0 ? <Home className="h-3 w-3" /> : item.name}
-          </Button>
-        </div>
-      ))}
-    </nav>
+    <Breadcrumb>
+      <BreadcrumbList>
+        {truncatedItems.map((item, index) => (
+          <React.Fragment key={`${item.path}-${index}`}>
+            <BreadcrumbItem>
+              {item.name === '...' ? (
+                <BreadcrumbEllipsis
+                  className="cursor-pointer hover:bg-muted rounded-sm"
+                  onClick={() => onNavigate(item.path)}
+                  title="Click to navigate to middle path"
+                />
+              ) : index === truncatedItems.length - 1 ? (
+                <BreadcrumbPage className="flex items-center">
+                  {index === 0 && item.name === 'Home' ? (
+                    <>
+                      <Home className="h-4 w-4 mr-1" />
+                      Home
+                    </>
+                  ) : (
+                    item.name
+                  )}
+                </BreadcrumbPage>
+              ) : (
+                <BreadcrumbLink
+                  className="cursor-pointer flex items-center"
+                  onClick={() => onNavigate(item.path)}
+                >
+                  {index === 0 && item.name === 'Home' ? (
+                    <>
+                      <Home className="h-4 w-4 mr-1" />
+                      Home
+                    </>
+                  ) : (
+                    item.name
+                  )}
+                </BreadcrumbLink>
+              )}
+            </BreadcrumbItem>
+
+            {index < truncatedItems.length - 1 && <BreadcrumbSeparator />}
+          </React.Fragment>
+        ))}
+      </BreadcrumbList>
+    </Breadcrumb>
   );
 }
