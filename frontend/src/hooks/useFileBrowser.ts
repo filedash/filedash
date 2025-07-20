@@ -7,7 +7,7 @@ import { normalizePath } from '../utils/file';
 export function useFileBrowser(initialPath = '/', onFileOpen?: (file: FileItem) => void) {
   const [currentPath, setCurrentPath] = useState(normalizePath(initialPath));
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [viewMode, setViewMode] = useState<ViewMode>('grid'); // Changed default to grid
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 

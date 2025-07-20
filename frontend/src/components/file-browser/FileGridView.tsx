@@ -18,33 +18,38 @@ import { Button } from '../ui/button';
 import { MoreVertical, Download, Edit, Trash2, Copy } from 'lucide-react';
 import { FileGridIcon } from './FileGridIcon';
 import type { FileItem as FileItemType } from '../../types/file';
+import { sortFiles } from '../../utils/file-operations';
 
-interface FileGridProps {
+interface FileGridViewProps {
   files: FileItemType[];
-  onFileClick: (file: FileItemType) => void;
   selectedFiles: string[];
+  onFileClick: (file: FileItemType) => void;
   onFileSelect: (path: string, selected: boolean) => void;
-  onDownload?: (file: FileItemType) => void;
+  onDownload: (file: FileItemType) => void;
 }
 
-export function FileGrid({
+/**
+ * File Grid View Component
+ * Displays files in a responsive grid layout
+ */
+export function FileGridView({
   files,
-  onFileClick,
   selectedFiles,
+  onFileClick,
   onFileSelect,
   onDownload,
-}: FileGridProps) {
-  const handleFileClick = (file: FileItemType, e: React.MouseEvent) => {
-    // Prevent default to avoid triggering selection when clicking on card
-    e.preventDefault();
+}: FileGridViewProps) {
+  // Sort files with directories first
+  const sortedFiles = sortFiles(files, 'name', 'asc');
 
-    // Always trigger file opening on single click
+  const handleFileClick = (file: FileItemType, e: React.MouseEvent) => {
+    e.preventDefault();
     onFileClick(file);
   };
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-3 p-3 sm:gap-4 sm:p-4">
-      {files.map((file) => (
+    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-2 p-2 sm:gap-3 sm:p-3">
+      {sortedFiles.map((file) => (
         <ContextMenu key={file.path}>
           <ContextMenuTrigger>
             <Card
@@ -87,7 +92,7 @@ export function FileGrid({
                     <DropdownMenuItem
                       onClick={(e) => {
                         e.stopPropagation();
-                        onDownload?.(file);
+                        onDownload(file);
                       }}
                       disabled={file.is_directory}
                       className="cursor-pointer"
@@ -116,7 +121,7 @@ export function FileGrid({
               <div className="flex flex-col items-center text-center space-y-2 p-3 min-h-[120px] justify-center">
                 {/* Large File Icon */}
                 <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16">
-                  <FileGridIcon file={file} />
+                  <FileGridIcon file={file} size="lg" />
                 </div>
 
                 {/* File Name */}
@@ -135,7 +140,7 @@ export function FileGrid({
           {/* Context Menu */}
           <ContextMenuContent>
             <ContextMenuItem
-              onClick={() => onDownload?.(file)}
+              onClick={() => onDownload(file)}
               disabled={file.is_directory}
               className="cursor-pointer"
             >

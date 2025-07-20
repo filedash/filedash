@@ -5,13 +5,14 @@ interface AppLayoutProps {
   children: React.ReactNode;
 }
 
+/**
+ * Main application layout with full width and minimal spacing
+ */
 export function AppLayout({ children }: AppLayoutProps) {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="p-4 sm:p-6 lg:p-8">
-        <div className="mx-auto max-w-screen-2xl">{children}</div>
-      </main>
+      <main className="px-2 py-2 sm:px-4 sm:py-3">{children}</main>
     </div>
   );
 }

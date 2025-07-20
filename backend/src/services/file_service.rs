@@ -3,6 +3,7 @@ use crate::{
     errors::ApiError,
     utils::security::{resolve_path, validate_file_extension, validate_file_size},
 };
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::{
     fs,
@@ -16,7 +17,7 @@ pub struct FileInfo {
     pub name: String,
     pub path: String,
     pub size: u64,
-    pub modified: SystemTime,
+    pub modified: DateTime<Utc>,
     pub is_directory: bool,
     pub mime_type: Option<String>,
 }
@@ -212,7 +213,8 @@ impl FileService {
     /// Get file information
     fn get_file_info(&self, file_path: &Path, relative_path: &str) -> Result<FileInfo, ApiError> {
         let metadata = fs::metadata(file_path)?;
-        let modified = metadata.modified().unwrap_or(SystemTime::UNIX_EPOCH);
+        let modified_time = metadata.modified().unwrap_or(SystemTime::UNIX_EPOCH);
+        let modified = DateTime::<Utc>::from(modified_time);
         let is_directory = metadata.is_dir();
         
         let name = file_path
