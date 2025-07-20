@@ -14,8 +14,13 @@ RUN npm ci --only=production --no-audit --no-fund && \
 # Copy source files
 COPY frontend/ ./
 
-# Build frontend with optimization flags
-RUN npm run build -- --outDir=dist && \
+# Set build environment to production and API URL
+ENV NODE_ENV=production
+ENV VITE_API_URL=/api
+ENV VITE_USE_MOCK_API=false
+
+# Build frontend with optimization flags (production mode)
+RUN npm run build -- --mode production --outDir=dist && \
     # Remove source maps and unnecessary files for production
     find dist -name "*.map" -delete && \
     # Clean up node_modules to free space
