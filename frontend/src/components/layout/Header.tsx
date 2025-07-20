@@ -1,6 +1,6 @@
 import { Button } from '../ui/button';
-import { Folder, Search, LogOut } from 'lucide-react';
-import { Input } from '../ui/input';
+import { Folder, LogOut } from 'lucide-react';
+// import { Input } from '../ui/input'; // Commented out - not needed until search is implemented
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -12,9 +12,10 @@ import { ThemeToggle } from '../theme-toggle';
  * Features:
  * - Responsive design with consistent spacing
  * - Logo and branding
- * - Search functionality
  * - Theme toggle and user actions
  * - Proper alignment and visual hierarchy
+ *
+ * Note: Search functionality is commented out as it's not implemented yet
  */
 export function Header() {
   const { logout } = useAuth();
@@ -44,6 +45,8 @@ export function Header() {
         </div>
 
         {/* Search Bar - Center section */}
+        {/* TODO: Search functionality not implemented yet */}
+        {/*
         <div className="hidden md:flex flex-1 max-w-md mx-6">
           <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -53,16 +56,20 @@ export function Header() {
             />
           </div>
         </div>
+        */}
 
         {/* Actions - Right section */}
         <div className="flex items-center gap-2">
           {/* Right Actions */}
           <div className="flex items-center gap-1">
             {/* Mobile Search */}
+            {/* TODO: Mobile search not implemented yet */}
+            {/*
             <Button variant="ghost" size="sm" className="md:hidden h-8 w-8 p-0">
               <Search className="h-3.5 w-3.5" />
               <span className="sr-only">Search</span>
             </Button>
+            */}
 
             {/* Theme Toggle */}
             <ThemeToggle />
