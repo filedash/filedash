@@ -279,7 +279,7 @@ export function FileBrowserPage() {
       )}
 
       {/* Main File Browser - Full Width with minimal padding */}
-      <Card className="border-border/40 shadow-sm overflow-hidden rounded-lg">
+      <Card className="border-border/40 shadow-sm overflow-hidden rounded-lg bg-primary">
         {/* Compact Toolbar Header */}
         <div className="border-b border-border/40 bg-muted/20">
           <div className="px-2 py-1.5">

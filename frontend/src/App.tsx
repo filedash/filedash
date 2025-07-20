@@ -24,7 +24,6 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <Routes>
-            {/* Login page without layout */}
             <Route path="/login" element={<LoginPage />} />
 
             {/* Main app with layout - protected */}
