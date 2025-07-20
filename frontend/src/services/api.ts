@@ -14,8 +14,10 @@ class ApiService {
   private token: string | null = null;
 
   constructor() {
+    const apiUrl = import.meta.env.VITE_API_URL || '/api';
+
     this.client = axios.create({
-      baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api',
+      baseURL: apiUrl,
       timeout: 10000,
       headers: {
         'Content-Type': 'application/json',
