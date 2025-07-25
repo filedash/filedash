@@ -20,10 +20,17 @@ A modern, minimal, high-performance, Rust-based file browser for web.
 Run FileDash with Docker:
 
 ```bash
+# Create data directories first (prevents Docker from creating them as root)
+mkdir -p $(pwd)/files -p $(pwd)/database -p $(pwd)/logs
+
+# Run with your user permissions (avoids permission issues)
 docker run -d \
   --name filedash \
+  --user "$(id -u):$(id -g)" \
   -p 8080:8080 \
   -v $(pwd)/files:/app/files \
+  -v $(pwd)/database:/app/data \
+  -v $(pwd)/logs:/app/logs \
   -e FILEDASH_AUTH__JWT_SECRET=your_secure_secret_here \
   -e FILEDASH_ADMIN_PASSWORD=admin123 \
   filedash/filedash:latest
