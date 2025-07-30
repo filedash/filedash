@@ -18,10 +18,14 @@ class ApiService {
 
     this.client = axios.create({
       baseURL: apiUrl,
-      timeout: 10000,
+      timeout: 45000, // Increased timeout for better reliability with concurrent uploads
       headers: {
         'Content-Type': 'application/json',
       },
+      // Enable connection reuse for better performance
+      maxRedirects: 5,
+      maxContentLength: Infinity,
+      maxBodyLength: Infinity,
     });
 
     // Load token from localStorage on initialization
@@ -128,9 +132,9 @@ class ApiService {
     return response.data;
   }
 
-  async uploadFile(endpoint: string, formData: FormData, onProgress?: (progress: number) => void): Promise<UploadResponse> {
+  async uploadFile<T = UploadResponse>(endpoint: string, formData: FormData, onProgress?: (progress: number) => void): Promise<T> {
     if (USE_MOCK_API) {
-      return mockApiService.uploadFile(endpoint, formData, onProgress);
+      return mockApiService.uploadFile(endpoint, formData, onProgress) as Promise<T>;
     }
 
     try {
@@ -143,11 +147,14 @@ class ApiService {
         }))
       });
 
+      // Optimized timeouts for concurrent uploads
+      const timeout = endpoint.includes('upload-folder') ? 300000 : 180000; // 5 minutes for folder uploads, 3 minutes for file uploads
+
       const response = await this.client.post(endpoint, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
-        timeout: 3600000,
+        timeout: timeout,
         onUploadProgress: (progressEvent) => {
           if (onProgress && progressEvent.total) {
             const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);

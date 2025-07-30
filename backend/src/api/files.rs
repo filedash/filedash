@@ -21,6 +21,7 @@ pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/", get(list_files))
         .route("/upload", post(upload_files))
+        .route("/upload-folder", post(upload_folder))
         .route("/mkdir", post(create_directory))
         .route("/rename", put(rename_file))
         .route("/*path", delete(delete_file))
@@ -89,6 +90,16 @@ struct UploadResponse {
 }
 
 #[derive(Serialize)]
+struct FolderUploadResponse {
+    uploaded: Vec<FileInfo>,
+    failed: Vec<UploadError>,
+    folders_created: Vec<String>,
+    total_files: usize,
+    successful_files: usize,
+    failed_files: usize,
+}
+
+#[derive(Serialize)]
 struct UploadError {
     filename: String,
     error: String,
@@ -150,6 +161,198 @@ async fn upload_files(
     let _total_duration = start_time.elapsed();
     
     Ok(Json(UploadResponse { uploaded, failed }))
+}
+
+async fn upload_folder(
+    State(app_state): State<AppState>,
+    Extension(_auth_context): Extension<AuthContext>,
+    mut multipart: Multipart,
+) -> Result<Json<FolderUploadResponse>, ApiError> {
+    let mut uploaded = Vec::new();
+    let mut failed = Vec::new();
+    let mut folders_created = Vec::new();
+    let mut target_path = "/".to_string();
+    let mut created_dirs = std::collections::HashSet::new();
+
+    let start_time = std::time::Instant::now();
+
+    // Process fields one by one
+    while let Some(field) = multipart.next_field().await.map_err(|e| {
+        ApiError::BadRequest {
+            message: format!("Invalid multipart data: {}", e),
+        }
+    })? {
+        let name = field.name().unwrap_or("").to_string();
+        
+        if name == "path" {
+            // Extract target path
+            let data = field.bytes().await.map_err(|e| {
+                ApiError::BadRequest {
+                    message: format!("Failed to read path field: {}", e),
+                }
+            })?;
+            target_path = String::from_utf8_lossy(&data).to_string();
+        } else if name == "file" {
+            // Extract filename and relative path from webkitRelativePath or filename
+            let filename = field
+                .file_name()
+                .unwrap_or("unnamed_file")
+                .to_string();
+            
+            // For folder uploads, we expect the filename to contain the relative path
+            // This path should preserve the folder structure
+            let upload_start = std::time::Instant::now();
+            
+            match stream_upload_file_with_structure(&app_state.config, &target_path, &filename, field, &mut created_dirs).await {
+                Ok((file_info, created_dir)) => {
+                    let _upload_duration = upload_start.elapsed();
+                    uploaded.push(file_info);
+                    if let Some(dir) = created_dir {
+                        if !folders_created.contains(&dir) {
+                            folders_created.push(dir);
+                        }
+                    }
+                },
+                Err(e) => {
+                    let _upload_duration = upload_start.elapsed();
+                    failed.push(UploadError {
+                        filename: filename.clone(),
+                        error: e.to_string(),
+                    });
+                }
+            }
+        }
+    }
+
+    let _total_duration = start_time.elapsed();
+    let total_files = uploaded.len() + failed.len();
+    let successful_files = uploaded.len();
+    let failed_files = failed.len();
+    
+    Ok(Json(FolderUploadResponse { 
+        uploaded, 
+        failed, 
+        folders_created,
+        total_files,
+        successful_files,
+        failed_files,
+    }))
+}
+
+async fn stream_upload_file_with_structure(
+    config: &crate::config::Config, 
+    target_path: &str, 
+    relative_path: &str, 
+    mut field: axum::extract::multipart::Field<'_>,
+    created_dirs: &mut std::collections::HashSet<String>,
+) -> Result<(FileInfo, Option<String>), ApiError> {
+    use crate::utils::security::resolve_path;
+    use std::path::Path;
+    
+    // Get storage directory from config
+    let storage_path = &config.storage.home_directory;
+    
+    // Parse the relative path to extract directory structure and filename
+    let path_obj = Path::new(relative_path);
+    let filename = path_obj.file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or("unnamed_file");
+    
+    // Get the directory path within the relative structure
+    let dir_path = if let Some(parent) = path_obj.parent() {
+        if parent.as_os_str().is_empty() {
+            target_path.to_string()
+        } else {
+            format!("{}/{}", target_path.trim_end_matches('/'), parent.to_string_lossy())
+        }
+    } else {
+        target_path.to_string()
+    };
+    
+    // Resolve the full target path
+    let full_target_path = resolve_path(storage_path, &dir_path).map_err(|e| {
+        ApiError::BadRequest {
+            message: format!("Invalid target path: {}", e),
+        }
+    })?;
+    
+    // Track directory creation for response
+    let created_dir = if !created_dirs.contains(&dir_path) && dir_path != target_path {
+        created_dirs.insert(dir_path.clone());
+        Some(dir_path.clone())
+    } else {
+        None
+    };
+    
+    // Ensure target directory exists
+    tokio::fs::create_dir_all(&full_target_path).await.map_err(|e| {
+        ApiError::InternalServerError {
+            message: format!("Failed to create target directory: {}", e),
+        }
+    })?;
+    
+    let file_path = full_target_path.join(filename);
+    
+    // Create file and buffered writer
+    let file = File::create(&file_path).await.map_err(|e| {
+        ApiError::InternalServerError {
+            message: format!("Failed to create file: {}", e),
+        }
+    })?;
+    
+    let mut writer = BufWriter::new(file);
+    let mut total_bytes = 0u64;
+    let mut _chunk_count = 0u64;
+    let stream_start = std::time::Instant::now();
+    
+    // Stream data in chunks
+    while let Some(chunk) = field.next().await {
+        let chunk = chunk.map_err(|e| {
+            ApiError::BadRequest {
+                message: format!("Failed to read file chunk: {}", e),
+            }
+        })?;
+        
+        writer.write_all(&chunk).await.map_err(|e| {
+            ApiError::InternalServerError {
+                message: format!("Failed to write file chunk: {}", e),
+            }
+        })?;
+        
+        total_bytes += chunk.len() as u64;
+        _chunk_count += 1;
+    }
+    
+    // Flush and close file
+    writer.flush().await.map_err(|e| {
+        ApiError::InternalServerError {
+            message: format!("Failed to flush file: {}", e),
+        }
+    })?;
+    
+    let final_duration = stream_start.elapsed();
+    let final_mb = total_bytes as f64 / (1024.0 * 1024.0);
+    let _final_speed = final_mb / final_duration.as_secs_f64();
+    
+    // Get file metadata and create FileInfo
+    let metadata = tokio::fs::metadata(&file_path).await.map_err(|e| {
+        ApiError::InternalServerError {
+            message: format!("Failed to get file metadata: {}", e),
+        }
+    })?;
+    
+    let file_info = FileInfo {
+        name: filename.to_string(),
+        path: format!("{}/{}", dir_path.trim_end_matches('/'), filename),
+        size: metadata.len(),
+        is_directory: false,
+        modified: metadata.modified()
+            .map(|t| DateTime::<Utc>::from(t))
+            .unwrap_or_else(|_| Utc::now()),
+        mime_type: Some(mime_guess::from_path(filename).first_or_octet_stream().to_string()),
+    };
+    
+    Ok((file_info, created_dir))
 }
 
 async fn stream_upload_file(

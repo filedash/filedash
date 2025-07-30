@@ -1,8 +1,9 @@
 import { Button } from '../ui/button';
-import { FolderPlus, Upload } from 'lucide-react';
+import { FolderPlus, Upload, FolderUp } from 'lucide-react';
 
 interface FileBrowserEmptyStateProps {
   onUpload: () => void;
+  onUploadFolder: () => void;
   onCreateFolder: () => void;
 }
 
@@ -12,6 +13,7 @@ interface FileBrowserEmptyStateProps {
  */
 export function FileBrowserEmptyState({
   onUpload,
+  onUploadFolder,
   onCreateFolder,
 }: FileBrowserEmptyStateProps) {
   return (
@@ -37,13 +39,22 @@ export function FileBrowserEmptyState({
       {/* Actions */}
       <div className="flex flex-col sm:flex-row gap-3">
         <Button
-          variant="default"
+          variant="outline"
           size="lg"
           onClick={onUpload}
           className="flex items-center gap-2 min-w-[140px]"
         >
           <Upload className="h-4 w-4" />
           Upload Files
+        </Button>
+        <Button
+          variant="outline"
+          size="lg"
+          onClick={onUploadFolder}
+          className="flex items-center gap-2 min-w-[140px]"
+        >
+          <FolderUp className="h-4 w-4" />
+          Upload Folder
         </Button>
         <Button
           variant="outline"

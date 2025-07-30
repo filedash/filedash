@@ -1,11 +1,12 @@
 import { Button } from '../ui/button';
 import { ViewToggle, type ViewMode } from './ViewToggle';
-import { Upload, RefreshCw, FolderPlus } from 'lucide-react';
+import { Upload, RefreshCw, FolderPlus, FolderUp } from 'lucide-react';
 
 interface FileBrowserToolbarProps {
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
   onUpload: () => void;
+  onUploadFolder: () => void;
   onCreateFolder: () => void;
   onRefresh: () => void;
   isLoading: boolean;
@@ -19,6 +20,7 @@ export function FileBrowserToolbar({
   viewMode,
   onViewModeChange,
   onUpload,
+  onUploadFolder,
   onCreateFolder,
   onRefresh,
   isLoading,
@@ -49,7 +51,17 @@ export function FileBrowserToolbar({
           className="flex items-center gap-1 h-8 px-2"
         >
           <Upload className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Upload</span>
+          <span className="hidden sm:inline">Upload Files</span>
+        </Button>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onUploadFolder}
+          className="flex items-center gap-1 h-8 px-2"
+        >
+          <FolderUp className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">Upload Folder</span>
         </Button>
 
         <Button

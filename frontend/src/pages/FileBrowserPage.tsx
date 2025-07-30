@@ -47,6 +47,7 @@ export function FileBrowserPage() {
   const [fileToRename, setFileToRename] = useState<FileItem | null>(null);
   const [isRenaming, setIsRenaming] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const folderInputRef = useRef<HTMLInputElement>(null);
 
   /**
    * File download handler with toast notifications
@@ -106,26 +107,188 @@ export function FileBrowserPage() {
         })),
       });
 
+      // For large number of files, show progress feedback
+      if (fileArray.length > 10) {
+        let progressToastId: string | number | undefined;
+        
+        try {
+          const result = await new Promise<any>((resolve, reject) => {
+            // Show initial progress toast
+            progressToastId = toast.loading(`Uploading ${fileArray.length} files... (0%)`, {
+              duration: Infinity,
+            });
+
+            fileService.uploadFiles(fileArray, currentPath, (progress) => {
+              // Update the progress toast
+              if (progressToastId) {
+                toast.loading(`Uploading ${fileArray.length} files... (${progress}%)`, {
+                  id: progressToastId,
+                  duration: Infinity,
+                });
+              }
+            }).then(resolve).catch(reject);
+          });
+
+          // Dismiss the progress toast
+          if (progressToastId) {
+            toast.dismiss(progressToastId);
+          }
+
+          // Show success toast with details
+          const successMessage = result.errors.length > 0 
+            ? `Uploaded ${result.uploaded.length} of ${fileArray.length} files. ${result.errors.length} files failed.`
+            : `Successfully uploaded ${result.uploaded.length} files.`;
+
+          if (result.errors.length > 0) {
+            toast.warning(successMessage, { duration: 8000 });
+            console.warn('Upload errors:', result.errors);
+          } else {
+            toast.success(successMessage, { duration: 5000 });
+          }
+
+          refresh();
+        } catch (error) {
+          // Dismiss the progress toast on error
+          if (progressToastId) {
+            toast.dismiss(progressToastId);
+          }
+          
+          console.error('Upload error:', error);
+          toast.error(`Failed to upload files: ${error instanceof Error ? error.message : 'Unknown error'}`, {
+            duration: 8000
+          });
+        }
+      } else {
+        // For small number of files, use the simple toast promise
+        try {
+          await toast.promise(fileService.uploadFiles(fileArray, currentPath), {
+            loading: `Uploading ${fileArray.length} file${
+              fileArray.length > 1 ? 's' : ''
+            }...`,
+            success: (result) => {
+              refresh();
+              return `Successfully uploaded ${result.uploaded.length} file${
+                result.uploaded.length > 1 ? 's' : ''
+              }`;
+            },
+            error: (error) => {
+              console.error('Upload error:', error);
+              return `Failed to upload files: ${
+                error.message || 'Unknown error'
+              }`;
+            },
+          });
+        } catch (error) {
+          console.error('Upload failed:', error);
+        }
+      }
+    },
+    [currentPath, refresh]
+  );
+
+  /**
+   * Folder upload handler with progress and validation
+   */
+  const handleFolderUpload = useCallback(
+    async (files: FileList) => {
+      if (files.length === 0) return;
+
+      const fileArray = Array.from(files);
+      const folderNames = [...new Set(fileArray.map(f => {
+        const webkitPath = (f as any).webkitRelativePath || f.name;
+        return webkitPath.split('/')[0];
+      }))];
+
+      console.log('Uploading folder:', {
+        fileCount: fileArray.length,
+        folderNames,
+        currentPath,
+        files: fileArray.map((f) => ({
+          name: f.name,
+          webkitRelativePath: (f as any).webkitRelativePath,
+          size: f.size,
+          type: f.type,
+        })),
+      });
+
+      let progressToastId: string | number | undefined;
+      const startTime = Date.now();
+      let lastUpdateTime = startTime;
+      let lastProcessedFiles = 0;
+      
       try {
-        await toast.promise(fileService.uploadFiles(fileArray, currentPath), {
-          loading: `Uploading ${fileArray.length} file${
-            fileArray.length > 1 ? 's' : ''
-          }...`,
-          success: (result) => {
-            refresh();
-            return `Successfully uploaded ${result.uploaded.length} file${
-              result.uploaded.length > 1 ? 's' : ''
-            }`;
-          },
-          error: (error) => {
-            console.error('Upload error:', error);
-            return `Failed to upload files: ${
-              error.message || 'Unknown error'
-            }`;
-          },
+        const result = await new Promise<any>((resolve, reject) => {
+          // Show initial progress toast
+          progressToastId = toast.loading(`Uploading folder with ${fileArray.length} files... (0%) - Initializing...`, {
+            duration: Infinity,
+          });
+
+          fileService.uploadFolder(fileArray, currentPath, (progress) => {
+            const currentTime = Date.now();
+            const elapsedTime = (currentTime - startTime) / 1000; // seconds
+            const currentProcessedFiles = Math.round((progress / 100) * fileArray.length);
+            
+            // Calculate speed metrics
+            let speedInfo = '';
+            if (elapsedTime > 5) { // Only show speed after 5 seconds for accuracy
+              const filesPerSecond = currentProcessedFiles / elapsedTime;
+              const filesRemaining = fileArray.length - currentProcessedFiles;
+              const estimatedTimeRemaining = filesRemaining / filesPerSecond;
+              
+              if (currentTime - lastUpdateTime > 2000) { // Update speed every 2 seconds
+                const recentFilesProcessed = currentProcessedFiles - lastProcessedFiles;
+                const recentTimeElapsed = (currentTime - lastUpdateTime) / 1000;
+                const recentSpeed = recentFilesProcessed / recentTimeElapsed;
+                
+                speedInfo = ` - ${recentSpeed.toFixed(1)} files/sec - ~${Math.round(estimatedTimeRemaining / 60)}min remaining`;
+                lastUpdateTime = currentTime;
+                lastProcessedFiles = currentProcessedFiles;
+              }
+            }
+            
+            // Update the progress toast
+            if (progressToastId) {
+              toast.loading(`Uploading folder with ${fileArray.length} files... (${progress}%)${speedInfo}`, {
+                id: progressToastId,
+                duration: Infinity,
+              });
+            }
+          }).then(resolve).catch(reject);
         });
+
+        // Dismiss the progress toast
+        if (progressToastId) {
+          toast.dismiss(progressToastId);
+        }
+
+        const totalTime = (Date.now() - startTime) / 1000;
+        const avgSpeed = result.successful_files / totalTime;
+
+        // Show success toast with performance metrics
+        const successMessage = result.failed_files > 0 
+          ? `Uploaded ${result.successful_files} of ${result.total_files} files in ${Math.round(totalTime)}s (${avgSpeed.toFixed(1)} files/sec). Created ${result.folders_created.length} folder${result.folders_created.length !== 1 ? 's' : ''}. ${result.failed_files} files failed.`
+          : `Successfully uploaded ${result.successful_files} files in ${Math.round(totalTime)}s (${avgSpeed.toFixed(1)} files/sec). Created ${result.folders_created.length} folder${result.folders_created.length !== 1 ? 's' : ''}.`;
+
+        if (result.failed_files > 0) {
+          toast.warning(successMessage, { duration: 10000 });
+          
+          // Log failed files for debugging
+          console.warn('Failed files:', result.failed);
+        } else {
+          toast.success(successMessage, { duration: 8000 });
+        }
+
+        refresh();
       } catch (error) {
-        console.error('Upload failed:', error);
+        // Dismiss the progress toast on error
+        if (progressToastId) {
+          toast.dismiss(progressToastId);
+        }
+        
+        console.error('Folder upload error:', error);
+        toast.error(`Failed to upload folder: ${error instanceof Error ? error.message : 'Unknown error'}`, {
+          duration: 8000
+        });
       }
     },
     [currentPath, refresh]
@@ -201,6 +364,13 @@ export function FileBrowserPage() {
    */
   const triggerUpload = useCallback(() => {
     fileInputRef.current?.click();
+  }, []);
+
+  /**
+   * Trigger folder input for uploads
+   */
+  const triggerFolderUpload = useCallback(() => {
+    folderInputRef.current?.click();
   }, []);
 
   /**
@@ -317,6 +487,7 @@ export function FileBrowserPage() {
               viewMode={viewMode}
               onViewModeChange={setViewMode}
               onUpload={triggerUpload}
+              onUploadFolder={triggerFolderUpload}
               onCreateFolder={() => setCreateFolderDialogOpen(true)}
               onRefresh={refresh}
               isLoading={isLoading}
@@ -333,6 +504,7 @@ export function FileBrowserPage() {
           ) : files.length === 0 ? (
             <FileBrowserEmptyState
               onUpload={triggerUpload}
+              onUploadFolder={triggerFolderUpload}
               onCreateFolder={() => setCreateFolderDialogOpen(true)}
             />
           ) : (
@@ -362,6 +534,22 @@ export function FileBrowserPage() {
         onChange={(e) => {
           if (e.target.files) {
             handleUpload(e.target.files);
+            e.target.value = '';
+          }
+        }}
+      />
+
+      {/* Hidden folder input for folder uploads */}
+      <input
+        ref={folderInputRef}
+        type="file"
+        multiple
+        // @ts-ignore - webkitdirectory is not in the standard types
+        webkitdirectory=""
+        style={{ display: 'none' }}
+        onChange={(e) => {
+          if (e.target.files) {
+            handleFolderUpload(e.target.files);
             e.target.value = '';
           }
         }}
