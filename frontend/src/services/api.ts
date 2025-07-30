@@ -147,6 +147,7 @@ class ApiService {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
+        timeout: 3600000,
         onUploadProgress: (progressEvent) => {
           if (onProgress && progressEvent.total) {
             const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
@@ -177,6 +178,7 @@ class ApiService {
 
     const response = await this.client.get(endpoint, {
       responseType: 'blob',
+      timeout: 3600000,
     });
     return response.data;
   }

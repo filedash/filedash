@@ -8,8 +8,8 @@ description = "A high-performance, minimal file browser"
 [dependencies]
 # Web framework
 axum = { version = "0.6", features = ["multipart", "headers", "macros"] }
-tower = "0.4"
-tower-http = { version = "0.4", features = ["fs", "trace", "cors"] }
+tower = { version = "0.4", features = ["timeout"] }
+tower-http = { version = "0.4", features = ["fs", "trace", "cors", "limit"] }
 tokio = { version = "1", features = ["full"] }
 hyper = "0.14"
 
