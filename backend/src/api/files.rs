@@ -133,11 +133,11 @@ async fn upload_files(
             
             match stream_upload_file(&app_state.config, &target_path, &filename, field).await {
                 Ok(file_info) => {
-                    let upload_duration = upload_start.elapsed();
+                    let _upload_duration = upload_start.elapsed();
                     uploaded.push(file_info);
                 },
                 Err(e) => {
-                    let upload_duration = upload_start.elapsed();
+                    let _upload_duration = upload_start.elapsed();
                     failed.push(UploadError {
                         filename: filename.clone(),
                         error: e.to_string(),
@@ -147,7 +147,7 @@ async fn upload_files(
         }
     }
 
-    let total_duration = start_time.elapsed();
+    let _total_duration = start_time.elapsed();
     
     Ok(Json(UploadResponse { uploaded, failed }))
 }
@@ -188,7 +188,7 @@ async fn stream_upload_file(
     
     let mut writer = BufWriter::new(file);
     let mut total_bytes = 0u64;
-    let mut chunk_count = 0u64;
+    let mut _chunk_count = 0u64;
     let stream_start = std::time::Instant::now();
     
     // Stream data in chunks
@@ -206,7 +206,7 @@ async fn stream_upload_file(
         })?;
         
         total_bytes += chunk.len() as u64;
-        chunk_count += 1;
+        _chunk_count += 1;
     }
     
     // Flush and close file
@@ -218,7 +218,7 @@ async fn stream_upload_file(
     
     let final_duration = stream_start.elapsed();
     let final_mb = total_bytes as f64 / (1024.0 * 1024.0);
-    let final_speed = final_mb / final_duration.as_secs_f64();
+    let _final_speed = final_mb / final_duration.as_secs_f64();
     
     // Get file metadata and create FileInfo
     let metadata = tokio::fs::metadata(&file_path).await.map_err(|e| {
