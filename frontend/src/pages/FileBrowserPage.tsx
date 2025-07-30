@@ -82,6 +82,7 @@ export function FileBrowserPage() {
     setSortField,
     setSortDirection,
     refresh,
+    deleteFiles,
   } = useFileBrowser('/', handleDownload);
 
   /**
@@ -218,10 +219,38 @@ export function FileBrowserPage() {
   }, [files, selectedFiles, handleDownload]);
 
   const handleBulkDelete = useCallback(async () => {
-    console.log('Bulk delete:', selectedFiles);
-    // TODO: Implement bulk delete
-    toast.info('Bulk delete functionality coming soon');
-  }, [selectedFiles]);
+    if (selectedFiles.length === 0) {
+      toast.info('No files selected for deletion');
+      return;
+    }
+
+    const fileNames = selectedFiles.map(path => {
+      const file = files.find(f => f.path === path);
+      return file?.name || path.split('/').pop() || path;
+    }).join(', ');
+
+    try {
+      await toast.promise(deleteFiles(selectedFiles), {
+        loading: `Deleting ${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''}...`,
+        success: `Successfully deleted: ${fileNames}`,
+        error: `Failed to delete files`,
+      });
+    } catch (error) {
+      console.error('Delete failed:', error);
+    }
+  }, [selectedFiles, files, deleteFiles]);
+
+  const handleDeleteFile = useCallback(async (file: FileItem) => {
+    try {
+      await toast.promise(deleteFiles([file.path]), {
+        loading: `Deleting ${file.name}...`,
+        success: `Successfully deleted ${file.name}`,
+        error: `Failed to delete ${file.name}`,
+      });
+    } catch (error) {
+      console.error('Delete failed:', error);
+    }
+  }, [deleteFiles]);
 
   /**
    * Handle sorting with proper types
@@ -317,6 +346,7 @@ export function FileBrowserPage() {
               onFileSelect={handleFileSelect}
               onDownload={handleDownload}
               onRename={handleRename}
+              onDelete={handleDeleteFile}
               onSort={handleSort}
             />
           )}
@@ -372,6 +402,7 @@ interface FileBrowserContentProps {
   onFileSelect: (path: string, selected: boolean) => void;
   onDownload: (file: FileItem) => void;
   onRename: (file: FileItem) => void;
+  onDelete: (file: FileItem) => void;
   onSort: (field: string) => void;
 }
 
@@ -385,6 +416,7 @@ function FileBrowserContent({
   onFileSelect,
   onDownload,
   onRename,
+  onDelete,
   onSort,
 }: FileBrowserContentProps) {
   if (viewMode === 'list') {
@@ -398,6 +430,7 @@ function FileBrowserContent({
         onFileSelect={onFileSelect}
         onDownload={onDownload}
         onRename={onRename}
+        onDelete={onDelete}
         onSort={onSort}
       />
     );
@@ -411,6 +444,7 @@ function FileBrowserContent({
       onFileSelect={onFileSelect}
       onDownload={onDownload}
       onRename={onRename}
+      onDelete={onDelete}
     />
   );
 }

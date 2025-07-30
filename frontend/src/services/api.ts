@@ -182,6 +182,15 @@ class ApiService {
     });
     return response.data;
   }
+
+  async deleteFile(path: string): Promise<{ message: string; path: string }> {
+    if (USE_MOCK_API) {
+      return mockApiService.deleteFile(path);
+    }
+
+    const response = await this.client.delete(`/files/${path.replace(/^\//, '')}`);
+    return response.data;
+  }
 }
 
 export const apiService = new ApiService();

@@ -23,8 +23,8 @@ pub fn routes() -> Router<AppState> {
         .route("/upload", post(upload_files))
         .route("/mkdir", post(create_directory))
         .route("/rename", put(rename_file))
-        .route("/download/*path", get(download_file))
         .route("/*path", delete(delete_file))
+        .route("/download/*path", get(download_file))
         .layer(DefaultBodyLimit::max(1000 * 1024 * 1024 * 1024)) 
 }
 
