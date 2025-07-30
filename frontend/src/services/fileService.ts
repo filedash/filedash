@@ -18,17 +18,11 @@ export class FileService {
 
   async uploadFiles(files: File[], path?: string, onProgress?: (progress: number) => void): Promise<UploadResponse> {
     const formData = new FormData();
-    files.forEach(file => formData.append('file', file));
-
-    // Always add the path field - backend expects it to determine upload location
+    
     const targetPath = path || '/';
     formData.append('path', targetPath);
-
-    console.log('Upload request:', {
-      fileCount: files.length,
-      fileNames: files.map(f => f.name),
-      targetPath
-    });
+    
+    files.forEach(file => formData.append('file', file));
 
     return apiService.uploadFile('/files/upload', formData, onProgress);
   }
