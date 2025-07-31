@@ -9,7 +9,9 @@ use tower_http::{
     cors::CorsLayer,
     trace::TraceLayer,
     services::{ServeDir, ServeFile},
+    timeout::TimeoutLayer,
 };
+use std::time::Duration;
 use std::path::Path;
 
 pub mod api;
@@ -92,6 +94,7 @@ pub async fn create_app(config: Arc<Config>) -> Result<Router, Box<dyn std::erro
             ServiceBuilder::new()
                 .layer(TraceLayer::new_for_http())
                 .layer(CorsLayer::permissive())
+                .layer(TimeoutLayer::new(Duration::from_secs(config.server.request_timeout_seconds))) // Configurable timeout
         );
     
     Ok(app)

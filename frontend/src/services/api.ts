@@ -18,7 +18,7 @@ class ApiService {
 
     this.client = axios.create({
       baseURL: apiUrl,
-      timeout: 45000, // Increased timeout for better reliability with concurrent uploads
+      timeout: 60000, // Increased base timeout to 60 seconds for better reliability
       headers: {
         'Content-Type': 'application/json',
       },
@@ -147,8 +147,8 @@ class ApiService {
         }))
       });
 
-      // Optimized timeouts for concurrent uploads
-      const timeout = endpoint.includes('upload-folder') ? 300000 : 180000; // 5 minutes for folder uploads, 3 minutes for file uploads
+      // Optimized timeouts for concurrent uploads - 24 hours for folder uploads with multiple files
+      const timeout = endpoint.includes('upload-folder') ? 86400000 : 300000; // 24 hours for folder uploads, 5 minutes for file uploads
 
       const response = await this.client.post(endpoint, formData, {
         headers: {
@@ -185,7 +185,7 @@ class ApiService {
 
     const response = await this.client.get(endpoint, {
       responseType: 'blob',
-      timeout: 3600000,
+      timeout: 300000, // 5 minutes for downloads
     });
     return response.data;
   }

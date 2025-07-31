@@ -223,13 +223,23 @@ export function FileBrowserPage() {
             duration: Infinity,
           });
 
-          fileService.uploadFolder(fileArray, currentPath, (progress) => {
+          fileService.uploadFolder(fileArray, currentPath, (progress, currentFileName) => {
             const currentTime = Date.now();
             const elapsedTime = (currentTime - startTime) / 1000; // seconds
             const currentProcessedFiles = Math.round((progress / 100) * fileArray.length);
             
             // Calculate speed metrics
             let speedInfo = '';
+            let currentFileInfo = '';
+            
+            if (currentFileName) {
+              // Extract just the filename from the full path for display
+              const displayName = currentFileName.includes('/') 
+                ? currentFileName.split('/').pop() 
+                : currentFileName;
+              currentFileInfo = `\nCurrently: ${displayName}`;
+            }
+            
             if (elapsedTime > 5) { // Only show speed after 5 seconds for accuracy
               const filesPerSecond = currentProcessedFiles / elapsedTime;
               const filesRemaining = fileArray.length - currentProcessedFiles;
@@ -246,9 +256,9 @@ export function FileBrowserPage() {
               }
             }
             
-            // Update the progress toast
+            // Update the progress toast with current file information
             if (progressToastId) {
-              toast.loading(`Uploading folder with ${fileArray.length} files... (${progress}%)${speedInfo}`, {
+              toast.loading(`Uploading folder with ${fileArray.length} files... (${progress}%)${speedInfo}${currentFileInfo}`, {
                 id: progressToastId,
                 duration: Infinity,
               });
