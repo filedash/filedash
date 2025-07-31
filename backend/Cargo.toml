@@ -9,7 +9,7 @@ description = "A high-performance, minimal file browser"
 # Web framework
 axum = { version = "0.6", features = ["multipart", "headers", "macros"] }
 tower = { version = "0.4", features = ["timeout"] }
-tower-http = { version = "0.4", features = ["fs", "trace", "cors", "limit"] }
+tower-http = { version = "0.4", features = ["fs", "trace", "cors", "limit", "timeout"] }
 tokio = { version = "1", features = ["full"] }
 hyper = "0.14"
 
