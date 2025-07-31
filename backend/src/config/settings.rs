@@ -66,6 +66,7 @@ fn default_enable_auth() -> bool {
 fn default_request_timeout_seconds() -> u64 {
     // Allow environment variable override for extreme cases
     std::env::var("FILEDASH_REQUEST_TIMEOUT")
+        .ok()
         .and_then(|v| v.parse().ok())
         .unwrap_or(86400) // 24 hours default timeout for folder uploads with multiple files
 }
