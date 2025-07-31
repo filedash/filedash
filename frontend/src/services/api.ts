@@ -147,8 +147,8 @@ class ApiService {
         }))
       });
 
-      // Optimized timeouts for concurrent uploads - 24 hours for folder uploads with multiple files
-      const timeout = endpoint.includes('upload-folder') ? 86400000 : 300000; // 24 hours for folder uploads, 5 minutes for file uploads
+      // Optimized timeouts for concurrent uploads - 24 hours for both file and folder uploads
+      const timeout = endpoint.includes('upload-folder') ? 86400000 : 86400000; // 24 hours for both upload types
 
       const response = await this.client.post(endpoint, formData, {
         headers: {
