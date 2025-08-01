@@ -384,6 +384,10 @@ class MockApiService {
       path: `/${path}`,
     };
   }
+
+  async deleteFile(path: string): Promise<{ message: string; path: string }> {
+    return this.handleFileDelete(path);
+  }
 }
 
 export const mockApiService = new MockApiService();

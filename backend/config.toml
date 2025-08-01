@@ -1,6 +1,7 @@
 [server]
 port = 8080
 host = "0.0.0.0"
+request_timeout_seconds = 86400  # 24 hours for large folder uploads with multiple files
 
 [storage]
 home_directory = "./files"

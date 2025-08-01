@@ -70,6 +70,17 @@ export function useFileBrowser(initialPath = '/', onFileOpen?: (file: FileItem) 
     refetch();
   }, [refetch]);
 
+  const deleteFiles = useCallback(async (paths: string[]) => {
+    try {
+      await Promise.all(paths.map(path => fileService.deleteFile(path)));
+      setSelectedFiles([]); // Clear selection after deletion
+      refresh(); // Refresh the file list
+    } catch (error) {
+      console.error('Failed to delete files:', error);
+      throw error;
+    }
+  }, [refresh]);
+
   return {
     // State
     currentPath,
@@ -92,5 +103,6 @@ export function useFileBrowser(initialPath = '/', onFileOpen?: (file: FileItem) 
     setSortField,
     setSortDirection,
     refresh,
+    deleteFiles,
   };
 }

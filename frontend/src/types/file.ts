@@ -24,6 +24,22 @@ export interface UploadResponse {
   errors: string[];
 }
 
+export interface FolderUploadResponse {
+  uploaded: {
+    name: string;
+    path: string;
+    size: number;
+  }[];
+  failed: {
+    filename: string;
+    error: string;
+  }[];
+  folders_created: string[];
+  total_files: number;
+  successful_files: number;
+  failed_files: number;
+}
+
 export interface SearchResult {
   name: string;
   path: string;

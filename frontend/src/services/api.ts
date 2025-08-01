@@ -18,10 +18,14 @@ class ApiService {
 
     this.client = axios.create({
       baseURL: apiUrl,
-      timeout: 10000,
+      timeout: 60000, // Increased base timeout to 60 seconds for better reliability
       headers: {
         'Content-Type': 'application/json',
       },
+      // Enable connection reuse for better performance
+      maxRedirects: 5,
+      maxContentLength: Infinity,
+      maxBodyLength: Infinity,
     });
 
     // Load token from localStorage on initialization
@@ -128,9 +132,9 @@ class ApiService {
     return response.data;
   }
 
-  async uploadFile(endpoint: string, formData: FormData, onProgress?: (progress: number) => void): Promise<UploadResponse> {
+  async uploadFile<T = UploadResponse>(endpoint: string, formData: FormData, onProgress?: (progress: number) => void): Promise<T> {
     if (USE_MOCK_API) {
-      return mockApiService.uploadFile(endpoint, formData, onProgress);
+      return mockApiService.uploadFile(endpoint, formData, onProgress) as Promise<T>;
     }
 
     try {
@@ -143,10 +147,14 @@ class ApiService {
         }))
       });
 
+      // Optimized timeouts for concurrent uploads - 24 hours for both file and folder uploads
+      const timeout = endpoint.includes('upload-folder') ? 86400000 : 86400000; // 24 hours for both upload types
+
       const response = await this.client.post(endpoint, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
+        timeout: timeout,
         onUploadProgress: (progressEvent) => {
           if (onProgress && progressEvent.total) {
             const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
@@ -177,7 +185,17 @@ class ApiService {
 
     const response = await this.client.get(endpoint, {
       responseType: 'blob',
+      timeout: 300000, // 5 minutes for downloads
     });
+    return response.data;
+  }
+
+  async deleteFile(path: string): Promise<{ message: string; path: string }> {
+    if (USE_MOCK_API) {
+      return mockApiService.deleteFile(path);
+    }
+
+    const response = await this.client.delete(`/files/${path.replace(/^\//, '')}`);
     return response.data;
   }
 }

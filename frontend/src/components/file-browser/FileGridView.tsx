@@ -27,6 +27,7 @@ interface FileGridViewProps {
   onFileSelect: (path: string, selected: boolean) => void;
   onDownload: (file: FileItemType) => void;
   onRename: (file: FileItemType) => void;
+  onDelete: (file: FileItemType) => void;
 }
 
 /**
@@ -40,6 +41,7 @@ export function FileGridView({
   onFileSelect,
   onDownload,
   onRename,
+  onDelete,
 }: FileGridViewProps) {
   // Sort files with directories first
   const sortedFiles = sortFiles(files, 'name', 'asc');
@@ -117,7 +119,13 @@ export function FileGridView({
                       Copy
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem className="text-destructive cursor-pointer">
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(file);
+                      }}
+                      className="text-destructive cursor-pointer"
+                    >
                       <Trash2 className="mr-2 h-4 w-4" />
                       Delete
                     </DropdownMenuItem>
@@ -167,7 +175,10 @@ export function FileGridView({
               Copy
             </ContextMenuItem>
             <ContextMenuSeparator />
-            <ContextMenuItem className="text-destructive cursor-pointer">
+            <ContextMenuItem
+              onClick={() => onDelete(file)}
+              className="text-destructive cursor-pointer"
+            >
               <Trash2 className="mr-2 h-4 w-4" />
               Delete
             </ContextMenuItem>
